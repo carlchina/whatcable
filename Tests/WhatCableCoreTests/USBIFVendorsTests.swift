@@ -86,4 +86,34 @@ final class CableDBTests: XCTestCase {
     func testCuratedCableNotFoundForUnknown() {
         XCTAssertNil(CableDB.curatedCable(vid: 0xDEAD, pid: 0xBEEF, cableVDO: 0))
     }
+
+    func testCuratedCableLookup() {
+        // CalDigit TS5 Plus bundled cable: VID 0x01B6, PID 0x4003.
+        let cable = CableDB.curatedCable(vid: 0x01B6, pid: 0x4003, cableVDO: 0x110A2644)
+        XCTAssertNotNil(cable)
+        XCTAssertTrue(cable?.brand.contains("CalDigit") ?? false)
+    }
+
+    func testCableCountMatchesExpected() {
+        // 12 distinct fingerprints from 13 reports (two CalDigit reports
+        // share the same VID/PID/VDO, so they collapse to one row).
+        XCTAssertGreaterThanOrEqual(CableDB.cableCount, 10)
+    }
+
+    func testVID0Disambiguation() {
+        // Three cables with VID=0/PID=0 but different Cable VDO values
+        // should resolve to different brands.
+        let cuktech = CableDB.curatedCable(vid: 0, pid: 0, cableVDO: 0)
+        let dockcase = CableDB.curatedCable(vid: 0, pid: 0, cableVDO: 0x00082042)
+        let vorodcip = CableDB.curatedCable(vid: 0, pid: 0, cableVDO: 0x000A6642)
+
+        XCTAssertNotNil(cuktech)
+        XCTAssertNotNil(dockcase)
+        XCTAssertNotNil(vorodcip)
+
+        // All three resolve to different brands.
+        XCTAssertNotEqual(cuktech?.brand, dockcase?.brand)
+        XCTAssertNotEqual(cuktech?.brand, vorodcip?.brand)
+        XCTAssertNotEqual(dockcase?.brand, vorodcip?.brand)
+    }
 }

@@ -209,6 +209,94 @@ func importUSBIDsVendors() -> (inserted: Int, skipped: Int) {
     return (inserted, skipped)
 }
 
+// MARK: - Known cables import (from data/known-cables.md)
+
+let knownCablesMD = "\(repoRoot)/data/known-cables.md"
+
+func importKnownCables() -> Int {
+    guard let text = try? String(contentsOfFile: knownCablesMD, encoding: .utf8) else {
+        fputs("warn: could not read \(knownCablesMD), skipping cables\n", stderr)
+        return 0
+    }
+
+    let insertSQL = """
+        INSERT OR REPLACE INTO cables (vid, pid, cable_vdo, brand, speed, power, type, xid, issue_url)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """
+    var stmt: OpaquePointer?
+    guard sqlite3_prepare_v2(db, insertSQL, -1, &stmt, nil) == SQLITE_OK else {
+        fputs("warn: prepare failed for cable insert\n", stderr)
+        return 0
+    }
+
+    runSQL("BEGIN TRANSACTION")
+    var count = 0
+
+    var inTable = false
+    for line in text.components(separatedBy: "\n") {
+        if line.hasPrefix("## Table") { inTable = true; continue }
+        if inTable, line.hasPrefix("## ") { break }
+        guard inTable, line.hasPrefix("|"), !line.contains("---") else { continue }
+
+        let parts = line.dropFirst().dropLast()
+            .components(separatedBy: "|")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+        // 10 columns: Brand, VID, PID, Cable VDO, Vendor, XID, Speed, Power, Type, Source
+        guard parts.count == 10 else { continue }
+        // Skip header row
+        guard parts[1].hasPrefix("`0x") else { continue }
+
+        let brand = parts[0]
+        // Skip "(needs review)" rows
+        if brand == "(needs review)" { continue }
+
+        guard let vid = parseHex(parts[1]),
+              let pid = parseHex(parts[2]) else { continue }
+        let cableVDO = parseHex(parts[3]) ?? 0
+        let xid = parts[5]
+        let speed = parts[6]
+        let power = parts[7]
+        let type = parts[8]
+        // Source cell is "[#NN](url)"; extract the URL.
+        let issueURL: String
+        if let urlStart = parts[9].range(of: "("),
+           let urlEnd = parts[9].range(of: ")") {
+            issueURL = String(parts[9][urlStart.upperBound..<urlEnd.lowerBound])
+        } else {
+            issueURL = ""
+        }
+
+        sqlite3_reset(stmt)
+        sqlite3_bind_int(stmt, 1, Int32(vid))
+        sqlite3_bind_int(stmt, 2, Int32(pid))
+        sqlite3_bind_int(stmt, 3, Int32(bitPattern: UInt32(cableVDO)))
+        sqlite3_bind_text(stmt, 4, (brand as NSString).utf8String, -1, nil)
+        sqlite3_bind_text(stmt, 5, (speed as NSString).utf8String, -1, nil)
+        sqlite3_bind_text(stmt, 6, (power as NSString).utf8String, -1, nil)
+        sqlite3_bind_text(stmt, 7, (type as NSString).utf8String, -1, nil)
+        sqlite3_bind_text(stmt, 8, (xid as NSString).utf8String, -1, nil)
+        sqlite3_bind_text(stmt, 9, (issueURL as NSString).utf8String, -1, nil)
+
+        if sqlite3_step(stmt) != SQLITE_DONE {
+            fputs("warn: failed to insert cable VID=\(vid) PID=\(pid): \(String(cString: sqlite3_errmsg(db)))\n", stderr)
+        } else {
+            count += 1
+        }
+    }
+
+    runSQL("COMMIT")
+    sqlite3_finalize(stmt)
+    return count
+}
+
+/// Parse "`0xABCD`" or "`0x01234567`" into an integer.
+func parseHex(_ s: String) -> Int? {
+    let trimmed = s.trimmingCharacters(in: .whitespaces)
+        .replacingOccurrences(of: "`", with: "")
+    guard trimmed.hasPrefix("0x") || trimmed.hasPrefix("0X") else { return nil }
+    return Int(trimmed.dropFirst(2), radix: 16)
+}
+
 // MARK: - Main
 
 openDB()
@@ -219,6 +307,9 @@ print("Imported \(vendorCount) USB-IF vendors")
 
 let usbids = importUSBIDsVendors()
 print("usb.ids: \(usbids.inserted) new vendors added, \(usbids.skipped) already in USB-IF list")
+
+let cableCount = importKnownCables()
+print("Imported \(cableCount) known cables")
 
 // Copy to docs/ for the website.
 closeDB()
