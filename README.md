@@ -222,8 +222,6 @@ Built by [Darryl Morley](https://github.com/darrylmorley).
 - [@Vardan933](https://github.com/Vardan933) - Armenian translation
 - [@abrauchli](https://github.com/abrauchli) - screenshot fix
 - [@durul](https://github.com/durul) - updater security audit
-- [@Jonty](https://github.com/Jonty) - window/Dock mode request
-- [@ineiti](https://github.com/ineiti) - Quit button request
 - [@nervous-inhuman](https://github.com/nervous-inhuman) - USB device matching and port state bug reports
 - [@hgschmie](https://github.com/hgschmie) - e-marker and Thunderbolt cable documentation that led to e-marker detection
 - [@joeshaw](https://github.com/joeshaw) - dual power source bug report, Thunderbolt data samples
