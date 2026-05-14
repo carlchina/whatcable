@@ -12,9 +12,6 @@
 #
 # Configure via .env (see .env.example).
 #
-# Flags:
-#   --pro   Include Pro features from Sources/WhatCablePlugins/ (sets WHATCABLE_PRO=1).
-#           Without this flag, builds are OSS-only.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -23,23 +20,6 @@ cd "$(dirname "$0")/.."
 if [[ -f ".env" ]]; then
     # shellcheck disable=SC1091
     set -a; source .env; set +a
-fi
-
-# Parse flags. Unset WHATCABLE_PRO from the environment so .env can't
-# accidentally enable Pro; only the --pro flag should do that.
-unset WHATCABLE_PRO 2>/dev/null || true
-for arg in "$@"; do
-    case "${arg}" in
-        --pro)
-            export WHATCABLE_PRO="1"
-            ;;
-    esac
-done
-
-if [[ "${WHATCABLE_PRO:-}" == "1" ]]; then
-    echo "==> Pro build (--pro flag set)"
-else
-    echo "==> OSS build (pass --pro to include Pro features)"
 fi
 
 APP_NAME="WhatCable"
@@ -100,10 +80,6 @@ fi
 # Build the widget as a universal binary with signing disabled.
 # Version constants are passed via xcodebuild overrides so project.yml
 # doesn't need to stay in sync with smoke-test.sh.
-WIDGET_SWIFT_FLAGS="SWIFT_ACTIVE_COMPILATION_CONDITIONS=\$(inherited)"
-if [[ "${WHATCABLE_PRO:-}" == "1" ]]; then
-    WIDGET_SWIFT_FLAGS="SWIFT_ACTIVE_COMPILATION_CONDITIONS=\$(inherited) WHATCABLE_PRO"
-fi
 xcodebuild build -project WhatCableWidget.xcodeproj -scheme WhatCableWidget \
     -configuration Release \
     -destination 'platform=macOS' \
@@ -111,7 +87,6 @@ xcodebuild build -project WhatCableWidget.xcodeproj -scheme WhatCableWidget \
     ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO \
     MARKETING_VERSION="${VERSION}" \
     CURRENT_PROJECT_VERSION="${BUILD_NUMBER}" \
-    "${WIDGET_SWIFT_FLAGS}" \
     -quiet
 
 # Copy the built .appex into the app bundle's PlugIns directory.
