@@ -19,6 +19,7 @@ public final class DarwinSnapshotProvider: CableSnapshotProvider, @unchecked Sen
         let pdWatcher = PDIdentityWatcher()
         let usbWatcher = USBWatcher()
         let tbWatcher = ThunderboltWatcher()
+        let usb3Watcher = USB3TransportWatcher()
         var started = false
 
         func ensureStarted() {
@@ -28,6 +29,7 @@ public final class DarwinSnapshotProvider: CableSnapshotProvider, @unchecked Sen
             pdWatcher.start()
             usbWatcher.start()
             tbWatcher.start()
+            usb3Watcher.start()
             started = true
         }
 
@@ -39,6 +41,7 @@ public final class DarwinSnapshotProvider: CableSnapshotProvider, @unchecked Sen
             powerWatcher.refresh()
             pdWatcher.refresh()
             tbWatcher.refresh()
+            usb3Watcher.refresh()
             let battery = SmartBatteryReader.read()
             return CableSnapshot(
                 ports: portWatcher.ports,
@@ -48,7 +51,8 @@ public final class DarwinSnapshotProvider: CableSnapshotProvider, @unchecked Sen
                 adapter: SystemPower.currentAdapter(),
                 thunderboltSwitches: tbWatcher.switches,
                 isDesktopMac: battery.isDesktopMac,
-                federatedIdentities: battery.federatedIdentities
+                federatedIdentities: battery.federatedIdentities,
+                usb3Transports: usb3Watcher.transports
             )
         }
     }

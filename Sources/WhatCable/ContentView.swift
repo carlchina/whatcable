@@ -74,6 +74,7 @@ struct ContentView: View {
     @StateObject private var powerWatcher = PowerSourceWatcher()
     @StateObject private var pdWatcher = PDIdentityWatcher()
     @StateObject private var tbWatcher = ThunderboltWatcher()
+    @StateObject private var usb3Watcher = USB3TransportWatcher()
     @EnvironmentObject private var refresh: RefreshSignal
     @ObservedObject private var settings = AppSettings.shared
     @ObservedObject private var updates = UpdateChecker.shared
@@ -100,6 +101,7 @@ struct ContentView: View {
             powerWatcher.start()
             pdWatcher.start()
             tbWatcher.start()
+            usb3Watcher.start()
             startPortPoll()
             isDesktopMac = SmartBatteryReader.read().isDesktopMac
         }
@@ -113,12 +115,14 @@ struct ContentView: View {
             powerWatcher.stop()
             pdWatcher.stop()
             tbWatcher.stop()
+            usb3Watcher.stop()
         }
         .onChange(of: refresh.tick) { _, _ in
             portWatcher.refresh()
             powerWatcher.refresh()
             pdWatcher.refresh()
             tbWatcher.refresh()
+            usb3Watcher.refresh()
         }
         // Port controller services don't fire IOKit match notifications when
         // their connection state flips, so we re-poll the port watcher
@@ -200,6 +204,7 @@ struct ContentView: View {
                                 powerSources: powerWatcher.sources(for: port),
                                 identities: pdWatcher.identities(for: port),
                                 thunderboltSwitches: tbWatcher.switches,
+                                usb3Transports: usb3Watcher.transports(for: port),
                                 isLive: isPortLive(port),
                                 showAdvanced: showAdvanced
                             )
@@ -412,6 +417,7 @@ struct PortCard: View {
     let powerSources: [PowerSource]
     let identities: [PDIdentity]
     let thunderboltSwitches: [ThunderboltSwitch]
+    let usb3Transports: [USB3Transport]
     /// Authoritative connection state derived from the live IOKit watchers,
     /// passed in from the parent so we don't have to consult them from here
     /// and so PortSummary doesn't fall back to the unreliable
@@ -428,6 +434,7 @@ struct PortCard: View {
             identities: identities,
             devices: devices,
             thunderboltSwitches: thunderboltSwitches,
+            usb3Transports: usb3Transports,
             isConnectedOverride: isLive
         )
     }

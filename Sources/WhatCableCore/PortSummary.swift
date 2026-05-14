@@ -40,6 +40,7 @@ extension PortSummary {
         devices: [USBDevice] = [],
         thunderboltSwitches: [ThunderboltSwitch] = [],
         federatedIdentities: [FederatedIdentity] = [],
+        usb3Transports: [USB3Transport] = [],
         isConnectedOverride: Bool? = nil
     ) {
         let connected = isConnectedOverride ?? (port.connectionActive == true)
@@ -109,7 +110,16 @@ extension PortSummary {
                 bullets.append(contentsOf: tbBullets)
             }
         } else if hasUSB3 {
-            bullets.append(String(localized: "SuperSpeed USB (5 Gbps or faster)", bundle: _coreLocalizedBundle))
+            // When we have USB3 transport data for this port, show the
+            // precise generation (Gen 1 = 5 Gbps, Gen 2 = 10 Gbps).
+            // Fall back to the generic label when the transport service
+            // hasn't appeared yet or lacks signaling data.
+            let usb3 = usb3Transports.first { $0.portKey == port.portKey }
+            if let label = usb3?.speedLabel {
+                bullets.append(label)
+            } else {
+                bullets.append(String(localized: "SuperSpeed USB (5 Gbps or faster)", bundle: _coreLocalizedBundle))
+            }
         } else if hasUSB2 {
             bullets.append(String(localized: "USB 2.0 only (480 Mbps), no high-speed data", bundle: _coreLocalizedBundle))
         }

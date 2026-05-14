@@ -9,7 +9,8 @@ public enum JSONFormatter {
         adapter: AdapterInfo? = nil,
         thunderboltSwitches: [ThunderboltSwitch] = [],
         isDesktopMac: Bool = false,
-        federatedIdentities: [FederatedIdentity] = []
+        federatedIdentities: [FederatedIdentity] = [],
+        usb3Transports: [USB3Transport] = []
     ) throws -> String {
         let output = Output(
             version: AppInfo.version,
@@ -22,7 +23,8 @@ public enum JSONFormatter {
                     thunderboltSwitches: thunderboltSwitches,
                     showRaw: showRaw,
                     adapter: adapter,
-                    federatedIdentities: federatedIdentities
+                    federatedIdentities: federatedIdentities,
+                    usb3Transports: usb3Transports.filter { $0.portKey == port.portKey }
                 )
             },
             thunderboltSwitches: thunderboltSwitches.map { ThunderboltSwitchDTO(sw: $0) }
@@ -75,7 +77,8 @@ private struct PortDTO: Codable {
         thunderboltSwitches: [ThunderboltSwitch],
         showRaw: Bool,
         adapter: AdapterInfo?,
-        federatedIdentities: [FederatedIdentity] = []
+        federatedIdentities: [FederatedIdentity] = [],
+        usb3Transports: [USB3Transport] = []
     ) {
         self.name = port.portDescription ?? port.serviceName
         self.type = port.portTypeDescription
@@ -88,7 +91,8 @@ private struct PortDTO: Codable {
             sources: sources,
             identities: identities,
             thunderboltSwitches: thunderboltSwitches,
-            federatedIdentities: federatedIdentities
+            federatedIdentities: federatedIdentities,
+            usb3Transports: usb3Transports
         )
         self.status = String(describing: summary.status)
         self.headline = summary.headline
@@ -107,7 +111,8 @@ private struct PortDTO: Codable {
             supported: port.transportsSupported,
             active: port.transportsActive,
             provisioned: port.transportsProvisioned,
-            displayPortLanes: port.dpLaneConfig?.label
+            displayPortLanes: port.dpLaneConfig?.label,
+            usb3Speed: usb3Transports.first?.speedLabel
         )
 
         self.powerSources = sources.map { PowerSourceDTO(source: $0) }
@@ -132,6 +137,9 @@ private struct TransportsDTO: Codable {
     let active: [String]
     let provisioned: [String]
     let displayPortLanes: String?
+    /// Negotiated USB 3 speed label, e.g. "USB 3.2 Gen 1 (5 Gbps)".
+    /// Nil when no USB 3 transport data is available for this port.
+    let usb3Speed: String?
 }
 
 private struct PowerSourceDTO: Codable {

@@ -523,4 +523,137 @@ final class PortSummaryTests: XCTestCase {
         XCTAssertTrue(summary.bullets.isEmpty,
             "Pure .unknown with no data should have empty bullets, got: \(summary.bullets)")
     }
+
+    // MARK: - USB3 Transport integration
+
+    func testUSB3Gen1ShowsPreciseSpeed() {
+        let port = makePort(connected: true, active: ["USB3"], supported: ["CC", "USB3"])
+        let transport = USB3Transport(
+            id: 100, portKey: "2/1", signaling: 1,
+            signalingDescription: "Gen 1", dataRole: "host"
+        )
+        let summary = PortSummary(port: port, usb3Transports: [transport])
+        XCTAssertTrue(
+            summary.bullets.contains(where: { $0.contains("USB 3.2 Gen 1 (5 Gbps)") }),
+            "Gen 1 transport should produce precise label, got: \(summary.bullets)"
+        )
+        XCTAssertFalse(
+            summary.bullets.contains(where: { $0.contains("SuperSpeed USB") }),
+            "Generic SuperSpeed label should not appear when precise data is available"
+        )
+    }
+
+    func testUSB3Gen2ShowsPreciseSpeed() {
+        let port = makePort(connected: true, active: ["USB3"], supported: ["CC", "USB3"])
+        let transport = USB3Transport(
+            id: 101, portKey: "2/1", signaling: 2,
+            signalingDescription: "Gen 2", dataRole: "host"
+        )
+        let summary = PortSummary(port: port, usb3Transports: [transport])
+        XCTAssertTrue(
+            summary.bullets.contains(where: { $0.contains("USB 3.2 Gen 2 (10 Gbps)") }),
+            "Gen 2 transport should produce precise label, got: \(summary.bullets)"
+        )
+    }
+
+    func testUSB3FallbackWhenNoTransportData() {
+        // When the USB3 transport service hasn't appeared yet (no device
+        // connected or watcher hasn't caught up), fall back to the
+        // generic "SuperSpeed USB" label.
+        let port = makePort(connected: true, active: ["USB3"], supported: ["CC", "USB3"])
+        let summary = PortSummary(port: port, usb3Transports: [])
+        XCTAssertTrue(
+            summary.bullets.contains(where: { $0.contains("SuperSpeed USB") }),
+            "Should fall back to generic label without transport data, got: \(summary.bullets)"
+        )
+    }
+
+    func testUSB3FallbackWhenSignalingNil() {
+        // Transport exists but signaling field is nil (IOKit property absent).
+        let port = makePort(connected: true, active: ["USB3"], supported: ["CC", "USB3"])
+        let transport = USB3Transport(
+            id: 102, portKey: "2/1", signaling: nil,
+            signalingDescription: nil, dataRole: nil
+        )
+        let summary = PortSummary(port: port, usb3Transports: [transport])
+        XCTAssertTrue(
+            summary.bullets.contains(where: { $0.contains("SuperSpeed USB") }),
+            "Should fall back to generic label when signaling is nil, got: \(summary.bullets)"
+        )
+    }
+
+    func testUSB3UnknownSignalingShowsGenericGen() {
+        // A signaling value we haven't seen before should still produce
+        // a reasonable label rather than crashing or falling back to
+        // the generic "SuperSpeed USB" text.
+        let port = makePort(connected: true, active: ["USB3"], supported: ["CC", "USB3"])
+        let transport = USB3Transport(
+            id: 104, portKey: "2/1", signaling: 3,
+            signalingDescription: "Gen 3", dataRole: "host"
+        )
+        let summary = PortSummary(port: port, usb3Transports: [transport])
+        XCTAssertTrue(
+            summary.bullets.contains(where: { $0.contains("USB 3.2 Gen 3") }),
+            "Unknown gen should still produce a label, got: \(summary.bullets)"
+        )
+    }
+
+    func testThunderboltActiveIgnoresUSB3TransportData() {
+        // When Thunderbolt (CIO) is active, the USB3 bullet should not
+        // appear at all. The TB label takes priority. USB3 transport
+        // data should have no effect.
+        let port = makePort(connected: true, active: ["CIO", "USB3"], supported: ["CIO", "USB3"])
+        let transport = USB3Transport(
+            id: 105, portKey: "2/1", signaling: 2,
+            signalingDescription: "Gen 2", dataRole: "host"
+        )
+        let summary = PortSummary(
+            port: port,
+            sources: [usbPD(maxW: 96, winningW: 60)],
+            usb3Transports: [transport]
+        )
+        XCTAssertEqual(summary.status, .thunderboltCable)
+        XCTAssertFalse(
+            summary.bullets.contains(where: { $0.contains("USB 3.2") }),
+            "USB3 transport label should not appear when Thunderbolt is active, got: \(summary.bullets)"
+        )
+        XCTAssertTrue(
+            summary.bullets.contains(where: { $0.contains("Thunderbolt") || $0.contains("USB4") }),
+            "Thunderbolt bullet should be present, got: \(summary.bullets)"
+        )
+    }
+
+    func testUSB3TransportAloneDoesNotActivateUSB3Bullet() {
+        // The port controller's transportsActive is the authority for
+        // whether USB3 is active. Transport watcher data is supplementary
+        // (refines the speed label). If transportsActive doesn't include
+        // "USB3", the transport data should not cause a USB3 bullet to
+        // appear. This prevents a split-brain state where the speed
+        // bullet says "USB 3.2 Gen 2" but the headline says "Nothing
+        // connected."
+        let port = makePort(connected: true, active: [], supported: ["CC", "USB3"])
+        let transport = USB3Transport(
+            id: 106, portKey: "2/1", signaling: 2,
+            signalingDescription: "Gen 2", dataRole: "host"
+        )
+        let summary = PortSummary(port: port, usb3Transports: [transport])
+        XCTAssertFalse(
+            summary.bullets.contains(where: { $0.contains("USB 3.2") || $0.contains("SuperSpeed") }),
+            "USB3 bullet should not appear when transportsActive has no USB3, got: \(summary.bullets)"
+        )
+    }
+
+    func testUSB3TransportWrongPortKeyIgnored() {
+        // Transport data for a different port should not affect this port.
+        let port = makePort(connected: true, active: ["USB3"], supported: ["CC", "USB3"])
+        let transport = USB3Transport(
+            id: 103, portKey: "2/99", signaling: 2,
+            signalingDescription: "Gen 2", dataRole: "host"
+        )
+        let summary = PortSummary(port: port, usb3Transports: [transport])
+        XCTAssertTrue(
+            summary.bullets.contains(where: { $0.contains("SuperSpeed USB") }),
+            "Transport for wrong port should be ignored, got: \(summary.bullets)"
+        )
+    }
 }

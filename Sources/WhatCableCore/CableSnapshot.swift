@@ -34,6 +34,10 @@ public struct CableSnapshot: Equatable {
     /// Per-port federated PD identity from AppleSmartBattery's FedDetails.
     /// Empty on desktops or when nothing is connected.
     public let federatedIdentities: [FederatedIdentity]
+    /// USB 3 SuperSpeed link state per port. Present only while a USB 3
+    /// device is connected; the IOKit services appear and disappear
+    /// dynamically with plug/unplug events.
+    public let usb3Transports: [USB3Transport]
 
     public init(
         ports: [USBCPort],
@@ -43,7 +47,8 @@ public struct CableSnapshot: Equatable {
         adapter: AdapterInfo?,
         thunderboltSwitches: [ThunderboltSwitch] = [],
         isDesktopMac: Bool = false,
-        federatedIdentities: [FederatedIdentity] = []
+        federatedIdentities: [FederatedIdentity] = [],
+        usb3Transports: [USB3Transport] = []
     ) {
         self.ports = ports
         self.powerSources = powerSources
@@ -53,6 +58,7 @@ public struct CableSnapshot: Equatable {
         self.thunderboltSwitches = thunderboltSwitches
         self.isDesktopMac = isDesktopMac
         self.federatedIdentities = federatedIdentities
+        self.usb3Transports = usb3Transports
     }
 }
 

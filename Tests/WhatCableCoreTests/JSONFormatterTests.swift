@@ -125,6 +125,33 @@ final class JSONFormatterTests: XCTestCase {
         XCTAssertNotNil(transports["provisioned"] as? [String])
     }
 
+    func testUSB3SpeedAppearsInTransportsDTO() throws {
+        let port = makePort()
+        let transport = USB3Transport(
+            id: 200, portKey: "2/1", signaling: 2,
+            signalingDescription: "Gen 2", dataRole: "host"
+        )
+        let json = try JSONFormatter.render(
+            ports: [port], sources: [], identities: [], showRaw: false,
+            usb3Transports: [transport]
+        )
+        let obj = parse(json)
+        let portObj = (obj["ports"] as? [[String: Any]])?.first ?? [:]
+        let transports = try XCTUnwrap(portObj["transports"] as? [String: Any])
+        XCTAssertEqual(transports["usb3Speed"] as? String, "USB 3.2 Gen 2 (10 Gbps)")
+    }
+
+    func testUSB3SpeedNilWithoutTransportData() throws {
+        let json = try JSONFormatter.render(
+            ports: [makePort()], sources: [], identities: [], showRaw: false
+        )
+        let obj = parse(json)
+        let portObj = (obj["ports"] as? [[String: Any]])?.first ?? [:]
+        let transports = try XCTUnwrap(portObj["transports"] as? [String: Any])
+        // usb3Speed should be absent (null) when no transport data is provided.
+        XCTAssertNil(transports["usb3Speed"] as? String)
+    }
+
     // MARK: - Power sources
 
     func testPowerSourceDTOIncludesNegotiatedAndOptions() throws {
