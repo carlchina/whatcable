@@ -93,6 +93,11 @@
       }
       .nav-links a { color: inherit; text-decoration: none; }
       .nav-links a:hover { color: var(--ink); }
+      .nav .btn { display: inline-flex; align-items: center; padding: 8px 14px; border-radius: 8px; font-size: 14px; font-weight: 600; line-height: 1; text-decoration: none; }
+      .nav .btn-secondary { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+      .nav .btn-secondary:hover { border-color: #c8d0db; }
+      .nav .btn-accent { background: #0c8ca6; color: #fff; border: 1px solid #0c8ca6; }
+      .nav .btn-accent:hover { background: #0a7188; }
 
       main {
         padding: 48px 0 80px;
@@ -155,9 +160,8 @@
           <a href="/instructions">Docs</a>
           <a href="/cli">CLI</a>
           <a href="/cables">Cables</a>
-          <a href="/pro">Pro</a>
-          <a href="/support">Support</a>
-          <a href="https://github.com/darrylmorley/whatcable">GitHub</a>
+          <a class="btn btn-secondary" href="https://github.com/darrylmorley/whatcable">GitHub</a>
+          <a class="btn btn-accent" href="/pro">Get Pro</a>
         </nav>
       </div>
     </header>
