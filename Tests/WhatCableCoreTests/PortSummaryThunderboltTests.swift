@@ -350,7 +350,7 @@ final class PortSummaryThunderboltTests: XCTestCase {
             "expected CIO confirmation bullet; got: \(summary.bullets)"
         )
         XCTAssertTrue(
-            summary.bullets.contains { $0.contains("E-marker reports passive because") },
+            summary.bullets.contains { $0.contains("E-marker reports passive. This is normal") },
             "expected educational explanation bullet; got: \(summary.bullets)"
         )
         XCTAssertFalse(

@@ -219,7 +219,7 @@ extension PortSummary {
                     // Show the confirmed speed and a short explanation of
                     // why the e-marker says "passive".
                     bullets.append(String(localized: "Controller confirms Thunderbolt cable (\(label))", bundle: _coreLocalizedBundle))
-                    bullets.append(String(localized: "E-marker reports passive because the cable's active components condition the Thunderbolt signal path, not the USB path.", bundle: _coreLocalizedBundle))
+                    bullets.append(String(localized: "E-marker reports passive. This is normal for Thunderbolt cables where the active electronics handle Thunderbolt, not USB.", bundle: _coreLocalizedBundle))
                 } else {
                     // No CIO data (or unrecognised speed code): keep the
                     // existing educational fallback.
