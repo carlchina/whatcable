@@ -657,6 +657,149 @@ final class PortSummaryTests: XCTestCase {
         )
     }
 
+    // MARK: - USB device speed preferred over HPM transport
+
+    func testUSB3DeviceSpeedPreferredOverTransport() {
+        // Issue #140: IOUSBHostDevice reports Gen 2 (10 Gbps) but HPM
+        // SuperSpeedSignaling reports Gen 1 (5 Gbps). The device speed
+        // should win because it comes from the host controller negotiation.
+        let port = makePort(connected: true, active: ["USB3"], supported: ["CC", "USB3"])
+        let transport = USB3Transport(
+            id: 200, portKey: "2/1", signaling: 1,
+            signalingDescription: "Gen 1", dataRole: "host"
+        )
+        let device = USBDevice(
+            id: 300, locationID: 0x0120_0000,
+            vendorID: 0x04E8, productID: 0x4001,
+            vendorName: "Samsung", productName: "PSSD T7",
+            serialNumber: nil, usbVersion: "3.2",
+            speedRaw: 4, busPowerMA: 900, currentMA: 896,
+            controllerPortName: "Port-USB-C@1",
+            rawProperties: [:]
+        )
+        let summary = PortSummary(
+            port: port, devices: [device], usb3Transports: [transport]
+        )
+        XCTAssertTrue(
+            summary.bullets.contains(where: { $0.contains("USB 3.2 Gen 2 (10 Gbps)") }),
+            "Device speed (Gen 2) should win over HPM transport (Gen 1), got: \(summary.bullets)"
+        )
+        XCTAssertFalse(
+            summary.bullets.contains(where: { $0.contains("5 Gbps") }),
+            "Gen 1 label should not appear when device reports Gen 2, got: \(summary.bullets)"
+        )
+    }
+
+    func testUSB3FallsBackToTransportWhenNoDevice() {
+        // When no USB device is matched, the transport label should
+        // still be used (existing behaviour).
+        let port = makePort(connected: true, active: ["USB3"], supported: ["CC", "USB3"])
+        let transport = USB3Transport(
+            id: 201, portKey: "2/1", signaling: 2,
+            signalingDescription: "Gen 2", dataRole: "host"
+        )
+        let summary = PortSummary(port: port, usb3Transports: [transport])
+        XCTAssertTrue(
+            summary.bullets.contains(where: { $0.contains("USB 3.2 Gen 2 (10 Gbps)") }),
+            "Should fall back to transport label when no device matched, got: \(summary.bullets)"
+        )
+    }
+
+    func testUSB3DeviceSpeedIgnoresUSB2Devices() {
+        // A USB 2.0 device (speedRaw=2) behind a hub should not produce
+        // a USB3 speed label. Only SuperSpeed and above count.
+        let port = makePort(connected: true, active: ["USB3"], supported: ["CC", "USB3"])
+        let transport = USB3Transport(
+            id: 202, portKey: "2/1", signaling: 1,
+            signalingDescription: "Gen 1", dataRole: "host"
+        )
+        let usb2Device = USBDevice(
+            id: 301, locationID: 0x0120_0000,
+            vendorID: 0x1234, productID: 0x0001,
+            vendorName: "Test", productName: "USB2 Device",
+            serialNumber: nil, usbVersion: "2.0",
+            speedRaw: 2, busPowerMA: 500, currentMA: 100,
+            controllerPortName: "Port-USB-C@1",
+            rawProperties: [:]
+        )
+        let summary = PortSummary(
+            port: port, devices: [usb2Device], usb3Transports: [transport]
+        )
+        XCTAssertTrue(
+            summary.bullets.contains(where: { $0.contains("USB 3.2 Gen 1 (5 Gbps)") }),
+            "USB 2.0 device speed should be ignored, transport label should win, got: \(summary.bullets)"
+        )
+    }
+
+    func testUSB3HubWithFasterDownstreamDevice() {
+        // A Gen 1 hub (5 Gbps upstream) with a Gen 2 device (10 Gbps)
+        // behind it. The bullet should reflect the upstream link (Gen 1),
+        // not the downstream device's faster negotiation with the hub.
+        let port = makePort(connected: true, active: ["USB3"], supported: ["CC", "USB3"])
+        let transport = USB3Transport(
+            id: 203, portKey: "2/1", signaling: 1,
+            signalingDescription: "Gen 1", dataRole: "host"
+        )
+        // Hub is root device: locationID 0x0120_0000 (one path nibble)
+        let hub = USBDevice(
+            id: 400, locationID: 0x0120_0000,
+            vendorID: 0x2109, productID: 0x2822,
+            vendorName: "VIA Labs", productName: "USB3.0 Hub",
+            serialNumber: nil, usbVersion: "3.2",
+            speedRaw: 3, busPowerMA: 900, currentMA: 0,
+            controllerPortName: "Port-USB-C@1",
+            rawProperties: [:]
+        )
+        // Downstream device: locationID 0x0121_0000 (two path nibbles)
+        let downstream = USBDevice(
+            id: 401, locationID: 0x0121_0000,
+            vendorID: 0x04E8, productID: 0x4001,
+            vendorName: "Samsung", productName: "PSSD T7",
+            serialNumber: nil, usbVersion: "3.2",
+            speedRaw: 4, busPowerMA: 900, currentMA: 896,
+            controllerPortName: "Port-USB-C@1",
+            rawProperties: [:]
+        )
+        let summary = PortSummary(
+            port: port, devices: [hub, downstream], usb3Transports: [transport]
+        )
+        XCTAssertTrue(
+            summary.bullets.contains(where: { $0.contains("USB 3.2 Gen 1 (5 Gbps)") }),
+            "Hub upstream speed (Gen 1) should be used, not downstream device (Gen 2), got: \(summary.bullets)"
+        )
+        XCTAssertFalse(
+            summary.bullets.contains(where: { $0.contains("10 Gbps") }),
+            "Downstream Gen 2 speed should not appear, got: \(summary.bullets)"
+        )
+    }
+
+    func testUSB3FallsBackToTransportWhenNoRootDevice() {
+        // If only downstream (non-root) devices are matched and none are
+        // root devices, fall back to the HPM transport label.
+        let port = makePort(connected: true, active: ["USB3"], supported: ["CC", "USB3"])
+        let transport = USB3Transport(
+            id: 204, portKey: "2/1", signaling: 1,
+            signalingDescription: "Gen 1", dataRole: "host"
+        )
+        // Only a downstream device (two path nibbles), no root
+        let downstream = USBDevice(
+            id: 402, locationID: 0x0121_0000,
+            vendorID: 0x04E8, productID: 0x4001,
+            vendorName: "Samsung", productName: "PSSD T7",
+            serialNumber: nil, usbVersion: "3.2",
+            speedRaw: 4, busPowerMA: 900, currentMA: 896,
+            controllerPortName: "Port-USB-C@1",
+            rawProperties: [:]
+        )
+        let summary = PortSummary(
+            port: port, devices: [downstream], usb3Transports: [transport]
+        )
+        XCTAssertTrue(
+            summary.bullets.contains(where: { $0.contains("USB 3.2 Gen 1 (5 Gbps)") }),
+            "Should fall back to HPM transport when no root device, got: \(summary.bullets)"
+        )
+    }
+
     // MARK: - Real cable reproductions (from issue reports)
 
     /// Issue #131: Apple Thunderbolt 5 data cable (A3189) on M4 MBA.

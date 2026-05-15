@@ -11,7 +11,8 @@ public enum TextFormatter {
         isDesktopMac: Bool = false,
         federatedIdentities: [FederatedIdentity] = [],
         usb3Transports: [USB3Transport] = [],
-        cioCapabilities: [CIOCableCapability] = []
+        cioCapabilities: [CIOCableCapability] = [],
+        usbDevices: [USBDevice] = []
     ) -> String {
         if ports.isEmpty {
             return String(localized: "No USB-C / MagSafe ports were found on this Mac.", bundle: _coreLocalizedBundle) + "\n"
@@ -40,7 +41,8 @@ public enum TextFormatter {
                 federatedIdentities: federatedIdentities,
                 usb3Transports: usb3Transports.filter { $0.portKey == port.portKey },
                 cioCapability: cioCapabilities.first { $0.portKey == port.portKey },
-                chargerWattageSource: wattageSource
+                chargerWattageSource: wattageSource,
+                usbDevices: port.matchingDevices(from: usbDevices)
             )
         }
         return out
@@ -56,12 +58,14 @@ public enum TextFormatter {
         federatedIdentities: [FederatedIdentity] = [],
         usb3Transports: [USB3Transport] = [],
         cioCapability: CIOCableCapability? = nil,
-        chargerWattageSource: ChargerWattageSource = .unknown
+        chargerWattageSource: ChargerWattageSource = .unknown,
+        usbDevices: [USBDevice] = []
     ) -> String {
         let summary = PortSummary(
             port: port,
             sources: sources,
             identities: identities,
+            devices: usbDevices,
             thunderboltSwitches: thunderboltSwitches,
             federatedIdentities: federatedIdentities,
             usb3Transports: usb3Transports,

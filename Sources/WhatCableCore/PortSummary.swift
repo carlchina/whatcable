@@ -1,4 +1,7 @@
 import Foundation
+import os.log
+
+private let _portSummaryLog = Logger(subsystem: "uk.whatcable.whatcable", category: "port-summary")
 
 /// Plain-English interpretation of a USBCPort's raw IOKit data.
 public struct PortSummary {
@@ -112,12 +115,24 @@ extension PortSummary {
                 bullets.append(contentsOf: tbBullets)
             }
         } else if hasUSB3 {
-            // When we have USB3 transport data for this port, show the
-            // precise generation (Gen 1 = 5 Gbps, Gen 2 = 10 Gbps).
-            // Fall back to the generic label when the transport service
-            // hasn't appeared yet or lacks signaling data.
-            let usb3 = usb3Transports.first { $0.portKey == port.portKey }
-            if let label = usb3?.speedLabel {
+            // Pick the root USB device on this port (directly attached to the
+            // host controller, not behind a hub). Its Device Speed reflects
+            // the upstream link, which is what the bullet describes. With a
+            // hub, downstream devices can negotiate faster than the upstream
+            // link and would be misleading.
+            let rootDevice = devices.first { $0.isRootDevice && ($0.speedRaw ?? 0) >= 3 }
+            let deviceSpeedLabel = rootDevice?.usb3SpeedLabel
+            let transportLabel = usb3Transports
+                .first { $0.portKey == port.portKey }?
+                .speedLabel
+
+            if let deviceLabel = deviceSpeedLabel, let hpmLabel = transportLabel,
+               deviceLabel != hpmLabel {
+                let portName = port.serviceName
+                _portSummaryLog.warning("USB3 speed mismatch on \(portName): device=\(deviceLabel) HPM=\(hpmLabel)")
+            }
+
+            if let label = deviceSpeedLabel ?? transportLabel {
                 bullets.append(label)
             } else {
                 bullets.append(String(localized: "SuperSpeed USB (5 Gbps or faster)", bundle: _coreLocalizedBundle))

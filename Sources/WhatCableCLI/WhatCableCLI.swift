@@ -106,7 +106,8 @@ private func printSnapshot(_ snapshot: CableSnapshot, asJSON: Bool, showRaw: Boo
             federatedIdentities: snapshot.federatedIdentities,
             usb3Transports: snapshot.usb3Transports,
             trmTransports: snapshot.trmTransports,
-            cioCapabilities: snapshot.cioCapabilities
+            cioCapabilities: snapshot.cioCapabilities,
+            usbDevices: snapshot.usbDevices
         )
         print(json)
     } else {
@@ -120,7 +121,8 @@ private func printSnapshot(_ snapshot: CableSnapshot, asJSON: Bool, showRaw: Boo
             isDesktopMac: snapshot.isDesktopMac,
             federatedIdentities: snapshot.federatedIdentities,
             usb3Transports: snapshot.usb3Transports,
-            cioCapabilities: snapshot.cioCapabilities
+            cioCapabilities: snapshot.cioCapabilities,
+            usbDevices: snapshot.usbDevices
         )
         print(output, terminator: "")
     }
@@ -172,7 +174,8 @@ private func consumeWatchStream(provider: any CableSnapshotProvider, asJSON: Boo
                         federatedIdentities: snapshot.federatedIdentities,
                         usb3Transports: snapshot.usb3Transports,
                         trmTransports: snapshot.trmTransports,
-                        cioCapabilities: snapshot.cioCapabilities
+                        cioCapabilities: snapshot.cioCapabilities,
+                        usbDevices: snapshot.usbDevices
                     )
                 } catch {
                     FileHandle.standardError.write(Data("whatcable: json encoding failed: \(error)\n".utf8))
@@ -189,7 +192,8 @@ private func consumeWatchStream(provider: any CableSnapshotProvider, asJSON: Boo
                     isDesktopMac: snapshot.isDesktopMac,
                     federatedIdentities: snapshot.federatedIdentities,
                     usb3Transports: snapshot.usb3Transports,
-                    cioCapabilities: snapshot.cioCapabilities
+                    cioCapabilities: snapshot.cioCapabilities,
+                    usbDevices: snapshot.usbDevices
                 )
             }
 

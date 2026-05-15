@@ -12,7 +12,8 @@ public enum JSONFormatter {
         federatedIdentities: [FederatedIdentity] = [],
         usb3Transports: [USB3Transport] = [],
         trmTransports: [TRMTransport] = [],
-        cioCapabilities: [CIOCableCapability] = []
+        cioCapabilities: [CIOCableCapability] = [],
+        usbDevices: [USBDevice] = []
     ) throws -> String {
         let activePortCount = ports.filter { $0.connectionActive == true }.count
         let output = Output(
@@ -37,7 +38,8 @@ public enum JSONFormatter {
                     usb3Transports: usb3Transports.filter { $0.portKey == port.portKey },
                     trmTransports: trmTransports.filter { $0.portKey == port.portKey },
                     cioCapability: cioCapabilities.first { $0.portKey == port.portKey },
-                    chargerWattageSource: wattageSource
+                    chargerWattageSource: wattageSource,
+                    usbDevices: port.matchingDevices(from: usbDevices)
                 )
             },
             thunderboltSwitches: thunderboltSwitches.map { ThunderboltSwitchDTO(sw: $0) }
@@ -103,7 +105,8 @@ private struct PortDTO: Codable {
         usb3Transports: [USB3Transport] = [],
         trmTransports: [TRMTransport] = [],
         cioCapability: CIOCableCapability? = nil,
-        chargerWattageSource: ChargerWattageSource = .unknown
+        chargerWattageSource: ChargerWattageSource = .unknown,
+        usbDevices: [USBDevice] = []
     ) {
         self.name = port.portDescription ?? port.serviceName
         self.type = port.portTypeDescription
@@ -115,6 +118,7 @@ private struct PortDTO: Codable {
             port: port,
             sources: sources,
             identities: identities,
+            devices: usbDevices,
             thunderboltSwitches: thunderboltSwitches,
             federatedIdentities: federatedIdentities,
             usb3Transports: usb3Transports,
@@ -134,12 +138,15 @@ private struct PortDTO: Codable {
             self.thunderboltSwitchUID = nil
         }
 
+        let deviceUsb3Speed = usbDevices
+            .first { $0.isRootDevice && ($0.speedRaw ?? 0) >= 3 }?
+            .usb3SpeedLabel
         self.transports = TransportsDTO(
             supported: port.transportsSupported,
             active: port.transportsActive,
             provisioned: port.transportsProvisioned,
             displayPortLanes: port.dpLaneConfig?.label,
-            usb3Speed: usb3Transports.first?.speedLabel
+            usb3Speed: deviceUsb3Speed ?? usb3Transports.first?.speedLabel
         )
 
         self.powerSources = sources.map { PowerSourceDTO(source: $0) }
