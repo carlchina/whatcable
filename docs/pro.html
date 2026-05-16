@@ -130,11 +130,11 @@
       }
 
       .nav-links a:hover { color: var(--ink); }
-      .nav .btn { display: inline-flex; align-items: center; padding: 8px 14px; border-radius: 8px; font-size: 14px; font-weight: 600; line-height: 1; text-decoration: none; }
-      .nav .btn-secondary { background: #fff; color: var(--ink); border: 1px solid var(--line); }
-      .nav .btn-secondary:hover { border-color: #c8d0db; }
-      .nav .btn-accent { background: var(--accent); color: #fff; border: 1px solid var(--accent); }
-      .nav .btn-accent:hover { background: var(--accent-strong); }
+      .nav .button { padding: 8px 14px; min-height: 36px; font-size: 14px; text-decoration: none; display: inline-flex; align-items: center; border-radius: 8px; font-weight: 600; line-height: 1; }
+      .nav .button.secondary { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+      .nav .button.secondary:hover { border-color: #c8d0db; }
+      .nav .button.accent { background: var(--accent); color: #fff; border-color: var(--accent); }
+      .nav .button.accent:hover { background: var(--accent-strong); }
 
       /* Buttons */
       .button {
@@ -633,9 +633,9 @@
       }
 
       @media (max-width: 600px) {
-        .nav-links a:not(.btn) { display: none; }
+        .nav-links a:not(.button) { display: none; }
         .nav-links { gap: 12px; }
-        .nav .btn { padding: 8px 12px; font-size: 13px; }
+        .nav .button { padding: 8px 12px; font-size: 13px; }
         .hero h1 { font-size: 28px; }
         .hero p.lede { font-size: 16px; }
         .hero-actions { flex-direction: column; }
@@ -650,7 +650,7 @@
   </head>
   <body>
 
-    <nav class="nav">
+    <nav class="nav" aria-label="Primary">
       <div class="wrap">
         <div class="nav-inner">
           <a href="/" class="brand">
@@ -661,8 +661,8 @@
             <a href="/instructions">Docs</a>
             <a href="/cli">CLI</a>
             <a href="/cables">Cables</a>
-            <a class="btn btn-secondary" href="https://github.com/darrylmorley/whatcable">GitHub</a>
-            <a class="btn btn-accent" href="#pricing">Get Pro</a>
+            <a class="button secondary" href="https://github.com/darrylmorley/whatcable">GitHub</a>
+            <a class="button accent" href="#pricing">Get Pro</a>
           </div>
         </div>
       </div>
