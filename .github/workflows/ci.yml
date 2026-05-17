@@ -33,6 +33,12 @@ jobs:
 
       - name: Simulate mirror and verify no Pro code leaks
         run: |
+          # Skip on the public mirror (which doesn't have .public-exclude)
+          if [ ! -f .public-exclude ]; then
+            echo "Not the private repo, skipping."
+            exit 0
+          fi
+
           # Reproduce the mirror script's filtering logic and check the
           # resulting tree for anything that should not reach the public repo.
 
