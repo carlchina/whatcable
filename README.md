@@ -49,7 +49,15 @@ Right-click the menu bar icon for **Refresh**, a **Keep window open** toggle (ha
 
 ## WhatCable Pro
 
-WhatCable is free and open source. If you find it useful, you can support the project by picking up [WhatCable Pro](https://whatcable.uk/pro), which unlocks a ton of extra features: live power metering, PD contract inspection, port health counters, pin diagrams, cable resistance estimation, liquid detection status, and a dedicated power monitor window with a live system power-input graph that shows every physical port and its real negotiated contract, even on Macs that don't expose live per-port metering. One-time purchase, works on up to 2 Macs.
+WhatCable is free and open source. If you find it useful, you can support the project by picking up [WhatCable Pro](https://whatcable.uk/pro), which unlocks extra features:
+
+- Live power metering and PD contract inspection
+- Dedicated Power Monitor window with a live system power-input graph
+- Port health counters and cable resistance estimation
+- Pin diagrams and liquid detection status
+- Works even on Macs that don't expose live per-port metering
+
+One-time purchase, works on up to 2 Macs. See [whatcable.uk/pro](https://whatcable.uk/pro) for details.
 
 [![Buy WhatCable Pro](https://img.shields.io/badge/Buy%20WhatCable%20Pro-%C2%A34.99-orange?style=for-the-badge)](https://whatcable.uk/pro)
 
@@ -102,6 +110,7 @@ whatcable --json         # structured JSON, pipe into jq
 whatcable --watch        # stream updates as cables come and go (Ctrl+C to exit)
 whatcable --raw          # include underlying IOKit properties
 whatcable --report       # open a pre-filled GitHub issue for the connected cable
+whatcable --test-kit     # run diagnostic probes and submit anonymised data
 whatcable --version
 whatcable --help
 ```
@@ -125,16 +134,18 @@ WhatCable reads four families of IOKit services. No entitlements, no private API
 | `IOPortTransportComponentCCUSBPDSOP`, `...SOPp`, `...SOPpp` | PD Discover Identity VDOs from the port partner (SOP), the cable's near-end e-marker (SOP'), and the far-end e-marker (SOP'') if present |
 | XHCI controller subtree | Each connected USB device is paired to its physical port via the XHCI port node's `UsbIOPort` registry path, falling back to a bus-index derived from the controller's `locationID` upper byte and the port's `hpm` SPMI ancestor on machines that don't expose `UsbIOPort`. |
 
-Cable speed and power decoding follow the USB Power Delivery spec (aligned to USB-PD R3.2 V1.2, March 2026). Vendor names come from a bundled SQLite database (`whatcable.db`) that merges USB-IF's published vendor list (~13,700 entries), the community `usb.ids` list, and a curated set of cable fingerprints reported by users.
+Cable speed and power decoding follow the USB Power Delivery spec (aligned to USB-PD R3.2 V1.2, March 2026). Vendor names come from a bundled SQLite database (`whatcable.db`) that merges USB-IF's published vendor list, the community `usb.ids` list, and a curated set of cable fingerprints reported by users.
 
 ## Build from source
 
 ```bash
-swift run WhatCable          # menu bar app
-swift run whatcable-cli      # CLI
+swift build                  # compile everything
+swift run WhatCable          # run the menu bar app (dev mode, no widget or bundle structure)
+swift run whatcable-cli      # run the CLI
+swift test                   # run the test suite
 ```
 
-Requires Swift 5.9+ (Xcode 15+).
+Requires Swift 5.9+ (Xcode 15+). Note: `swift run WhatCable` launches a working dev build but without the widget extension or proper `.app` bundle. For a distributable build, use the build scripts below.
 
 ## Build a distributable .app
 
@@ -189,14 +200,11 @@ cp .env.example .env
 - **Some cables only reveal their e-marker once something is plugged in at the other end.** The chip in the cable's plug runs off VCONN (a small power rail your Mac feeds into the cable) and only answers when the host issues a "Discover Identity" message. With nothing attached, some Macs read the e-marker straight away, others wait until they see a real partner to negotiate with. If a cable shows up as basic when bare, plug a charger, dock, or device into the far end and check again.
 - **WhatCable trusts the e-marker for capabilities.** Cable speed, current rating, and vendor come straight from the chip in the cable's plug, and software cannot verify what's inside the jacket. If a cable claims 240W / 40 Gbps but performs poorly, the chip is lying, not WhatCable. The trust-signals card flags a small set of internal-consistency tells (zero VID, reserved bit patterns in the Cable VDO, a VID not in the USB-IF list) that often appear on counterfeit or mis-flashed cables, but those flags are hedged signals, not proof.
 - **PD spec coverage:** the decoder is aligned to USB-PD R3.2 V1.2 (March 2026). Earlier 3.0 / 3.1 cables work fine.
-- **Vendor name lookup uses a bundled database** (~13,700 USB-IF entries plus the community usb.ids list). VIDs assigned after the bundled snapshot will show as "Unregistered / unknown" and trip a trust-signal flag until the database is refreshed.
-- **macOS only.** iOS sandboxing makes USB-C e-marker access much harder.
-- **Apple Silicon only.** Intel Macs route USB-C through Intel Thunderbolt 3 controllers (Titan Ridge / JHL9580). Apple's IOKit driver for those chips does not expose the USB-PD negotiation state or the cable e-marker VDOs, so there's no path to surface the same information on Intel hardware.
-- **Not on the App Store.** App Sandbox blocks the IOKit reads we depend on.
+- **Vendor name lookup uses a bundled database** (thousands of USB-IF entries plus the community usb.ids list). VIDs assigned after the bundled snapshot will show as "Unregistered / unknown" and trip a trust-signal flag until the database is refreshed.
 
 ## Linux port
 
-[@abrauchli](https://github.com/abrauchli) built a Rust port for Linux called [usbeehive](https://github.com/abrauchli/usbeehive). Really nice work. Install it with `cargo install usbeehive`. It started life as a `whatcable` crate on crates.io before being renamed to avoid confusion with this repo. He's also working on [usbee](https://github.com/abrauchli/usbee), a GNOME UI for it (early stage, but the basics work).
+[@abrauchli](https://github.com/abrauchli) built a Rust port for Linux called [usbeehive](https://github.com/abrauchli/usbeehive). Install it with `cargo install usbeehive`. It reads from the kernel's typec sysfs interface rather than IOKit, so it's an independent implementation rather than a fork. It started life as a `whatcable` crate on crates.io before being renamed to avoid confusion with this repo. He's also working on [usbee](https://github.com/abrauchli/usbee), a GNOME UI for it (early stage, but the basics work).
 
 ## Privacy
 
@@ -214,11 +222,15 @@ Issues and PRs welcome. The code is small and tries to stay readable.
 
 **Where to start:**
 
-- [`Sources/WhatCable/ContentView.swift`](Sources/WhatCable/ContentView.swift) for the UI
-- [`Sources/WhatCableCore/PortSummary.swift`](Sources/WhatCableCore/PortSummary.swift) for the plain-English diagnostic logic
-- [`Sources/WhatCableCore/PDVDO.swift`](Sources/WhatCableCore/PDVDO.swift) for USB-PD bit decoding
-- [`Sources/WhatCableDarwinBackend/`](Sources/WhatCableDarwinBackend/) for the IOKit watchers (port state, PD identity, power sources, USB devices, Thunderbolt fabric)
-- [`Sources/WhatCableCLI/`](Sources/WhatCableCLI/) for the CLI, which shares `WhatCableCore` with the menu bar app
+| Module | Role |
+| --- | --- |
+| [`Sources/WhatCable/`](Sources/WhatCable/) | Main menu bar app UI (SwiftUI popover, settings, notifications) |
+| [`Sources/WhatCableCore/`](Sources/WhatCableCore/) | Shared diagnostic logic, PD bit decoding, text formatting |
+| [`Sources/WhatCableDarwinBackend/`](Sources/WhatCableDarwinBackend/) | IOKit watchers (port state, PD identity, power sources, USB devices, Thunderbolt fabric) |
+| [`Sources/WhatCableAppKit/`](Sources/WhatCableAppKit/) | AppKit-level window and panel management |
+| [`Sources/WhatCablePlugins/`](Sources/WhatCablePlugins/) | Pro features (power metering, licence, cable diagnostics view, liquid detection) |
+| [`Sources/WhatCableWidget/`](Sources/WhatCableWidget/) | WidgetKit extension (small/medium/large desktop widgets) |
+| [`Sources/WhatCableCLI/`](Sources/WhatCableCLI/) | CLI binary, shares Core/Backend/Plugins with the app |
 
 ### Translations
 
