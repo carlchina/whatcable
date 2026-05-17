@@ -427,4 +427,78 @@ struct ChargingDiagnosticTests {
         )
         #expect(wattageSource == .portNegotiated(watts: 96))
     }
+
+    // MARK: - MagSafe Brick ID vs system adapter (issue #154)
+
+    /// A third-party 100W PD brick via Apple MagSafe: the port exposes
+    /// only a low-power "Brick ID" (no winning PDO), the real contract
+    /// is in the system adapter reading.
+    private func lowMagSafeBrickID() -> PowerSource {
+        PowerSource(
+            id: 2, name: "Brick ID", parentPortType: 0x11, parentPortNumber: 1,
+            options: [PowerOption(voltageMV: 5_000, maxCurrentMA: 500, maxPowerMW: 2_500)],
+            winning: nil
+        )
+    }
+
+    @Test("MagSafe Brick ID defers to higher system adapter wattage")
+    func magSafeBrickIDPrefersSystemAdapter() {
+        let wattageSource = ChargerWattageSource.resolve(
+            portSources: [lowMagSafeBrickID()],
+            activePortCount: 1,
+            adapter: AdapterInfo(watts: 100, isCharging: nil, source: "AC")
+        )
+        #expect(wattageSource == .systemAdapterFallback(watts: 100))
+    }
+
+    @Test("Brick ID kept when system adapter is not higher")
+    func brickIDKeptWhenAdapterNotHigher() {
+        // A legitimate high-wattage Brick ID equal to the adapter reading
+        // must stay port-negotiated, not get rewritten as a fallback.
+        let wattageSource = ChargerWattageSource.resolve(
+            portSources: [brickID(maxW: 100, winningW: 100)],
+            activePortCount: 1,
+            adapter: AdapterInfo(watts: 100, isCharging: nil, source: "AC")
+        )
+        #expect(wattageSource == .portNegotiated(watts: 100))
+    }
+
+    @Test("Brick ID divert blocked with multiple active ports")
+    func brickIDDivertBlockedWhenMultiplePortsActive() {
+        // #46 protection: with two active ports we can't attribute the
+        // system adapter reading, so the low Brick ID stands.
+        let wattageSource = ChargerWattageSource.resolve(
+            portSources: [lowMagSafeBrickID()],
+            activePortCount: 2,
+            adapter: AdapterInfo(watts: 100, isCharging: nil, source: "AC")
+        )
+        #expect(wattageSource == .portNegotiated(watts: 3))
+    }
+
+    @Test("Third-party MagSafe brick reports adapter wattage, not 3W")
+    func magSafeThirdPartyBrickShowsAdapterWattage() {
+        // Before the fix this rendered "Charger advertises up to 3W /
+        // Negotiation hasn't completed yet". It must now read 100W.
+        let adapter = AdapterInfo(watts: 100, isCharging: nil, source: "AC")
+        let wattageSource = ChargerWattageSource.resolve(
+            portSources: [lowMagSafeBrickID()],
+            activePortCount: 1,
+            adapter: adapter
+        )
+        #expect(wattageSource == .systemAdapterFallback(watts: 100))
+
+        let diag = ChargingDiagnostic(
+            port: port,
+            sources: [lowMagSafeBrickID()],
+            identities: [],
+            adapter: adapter,
+            wattageSource: wattageSource
+        )
+        guard case .chargerLimit(let w) = diag?.bottleneck else {
+            Issue.record("expected .chargerLimit from adapter fallback, got \(String(describing: diag?.bottleneck))")
+            return
+        }
+        #expect(w == 100)
+        #expect(diag?.summary == "System reports charger at 100W")
+    }
 }

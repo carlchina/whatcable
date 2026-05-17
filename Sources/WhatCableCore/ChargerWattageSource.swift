@@ -34,6 +34,25 @@ public enum ChargerWattageSource: Hashable {
     ) -> ChargerWattageSource {
         let source = PowerSource.preferredChargingSource(in: portSources)
 
+        // "Brick ID" is a low-fidelity analog identifier, not a USB-PD
+        // contract. On MagSafe with a third-party PD brick the port only
+        // exposes Brick ID (often ~3W) while the real negotiated wattage
+        // sits in the system adapter reading. Same situation as the
+        // TB-dock case in #141, extended to a Brick ID that does carry a
+        // tiny wattage (so the check below would otherwise accept it as
+        // authoritative). When Brick ID is the only source, one port is
+        // active, and the system adapter reports a higher wattage, trust
+        // the adapter. The single-active-port guard preserves the #46
+        // multi-charger protection. See issue #154.
+        if let source, source.name == "Brick ID",
+           activePortCount == 1,
+           let adapterW = adapter?.watts, adapterW > 0 {
+            let brickW = Int((Double(source.maxPowerMW) / 1000).rounded())
+            if adapterW > brickW {
+                return .systemAdapterFallback(watts: adapterW)
+            }
+        }
+
         if let source, source.maxPowerMW > 0 {
             let watts = Int((Double(source.maxPowerMW) / 1000).rounded())
             return .portNegotiated(watts: watts)
