@@ -215,25 +215,86 @@ public final class PowerTelemetryWatcher: ObservableObject {
             let operatingCurrent = Int((rdo >> 10) & 0x3FF) * 10
             let pdoPosition = Int((rdo >> 28) & 0x7)
             guard maxPower > 0 || pdoPosition > 0 else { return nil }
-            // Voltage is not recoverable from PortControllerInfo. The old code
-            // synthesized one from maxPower/current and showed it as a live
-            // reading, which also defeated the honest "negotiated max" card.
-            // Leave configuredVoltage at 0 and flag this as a contracted
-            // fallback so the UI is honest about what it does and doesn't have.
+
+            // Recover the negotiated voltage/current by decoding the source
+            // PDO list. This is NOT fabrication: the numbers come straight
+            // out of the PDO bytes the port negotiated. The RDO
+            // object-position field is unreliable (it points at the wrong
+            // PDO for MagSafe), so instead match the fixed-supply PDO whose
+            // power is closest to PortControllerMaxPower, the authoritative
+            // contracted figure. Verified against M5 Air dumps: USB-C
+            // 20V/2.25A = 45W, MagSafe 20V/2.99A = 59.8W. When no PDO list
+            // is present (or none matches) voltage stays 0 so we never
+            // invent one.
+            let negotiated = decodeNegotiatedContract(
+                pdoList: dict["PortControllerPortPDO"],
+                maxPowerMW: maxPower,
+                operatingCurrentMA: operatingCurrent
+            )
+
             let key = offset < portKeys.count ? portKeys[offset] : "2/\(offset + 1)"
             return PortPowerSample(
                 portIndex: offset + 1,
                 portKey: key,
-                current: operatingCurrent,
+                current: negotiated?.currentMA ?? operatingCurrent,
                 watts: maxPower,
-                configuredVoltage: 0,
-                configuredCurrent: operatingCurrent,
+                configuredVoltage: negotiated?.voltageMV ?? 0,
+                configuredCurrent: negotiated?.currentMA ?? operatingCurrent,
                 adapterVoltage: 0,
                 vconnCurrent: 0,
                 vconnPower: 0,
                 isContractedFallback: true
             )
         }
+    }
+
+    /// Decodes the negotiated fixed-supply PD contract from a port's source
+    /// PDO list. Picks the fixed PDO whose power is closest to `maxPowerMW`
+    /// (the authoritative contracted max), because the RDO object-position
+    /// field is wrong for MagSafe. A charger can offer two PDOs at the same
+    /// wattage (e.g. a 45W brick advertises both 15V/3A and 20V/2.25A); that
+    /// tie is broken with the RDO operating current, then by preferring the
+    /// higher voltage. Returns nil when there is no PDO list, no fixed PDO,
+    /// or no usable max-power reference, so callers leave voltage at 0
+    /// rather than inventing one.
+    nonisolated static func decodeNegotiatedContract(
+        pdoList: Any?,
+        maxPowerMW: Int,
+        operatingCurrentMA: Int
+    ) -> (voltageMV: Int, currentMA: Int)? {
+        guard maxPowerMW > 0 else { return nil }
+        let pdos = wcArray(pdoList)
+        guard !pdos.isEmpty else { return nil }
+
+        var candidates: [(voltageMV: Int, currentMA: Int, deltaMW: Int)] = []
+        for entry in pdos {
+            let pdo = wcUInt32(entry)
+            guard pdo != 0 else { continue }
+            // Fixed-supply PDOs have bits 31:30 == 00. Battery, variable,
+            // and augmented/PPS PDOs don't carry a plain fixed voltage.
+            guard (pdo >> 30) & 0x3 == 0 else { continue }
+            // Fixed PDO: voltage in 50 mV units (bits 19:10), max current
+            // in 10 mA units (bits 9:0).
+            let voltageMV = Int((pdo >> 10) & 0x3FF) * 50
+            let currentMA = Int(pdo & 0x3FF) * 10
+            guard voltageMV > 0, currentMA > 0 else { continue }
+            let powerMW = voltageMV * currentMA / 1000
+            candidates.append((voltageMV, currentMA, abs(powerMW - maxPowerMW)))
+        }
+        guard let minDelta = candidates.map(\.deltaMW).min() else { return nil }
+        let tied = candidates.filter { $0.deltaMW == minDelta }
+        if tied.count == 1 {
+            return (tied[0].voltageMV, tied[0].currentMA)
+        }
+        // Tie: the RDO operating current pins the actual PDO (it matches the
+        // selected PDO's max current). If that doesn't single one out, the
+        // Mac negotiates the highest voltage tier at a given wattage.
+        if operatingCurrentMA > 0,
+           let match = tied.first(where: { $0.currentMA == operatingCurrentMA }) {
+            return (match.voltageMV, match.currentMA)
+        }
+        let pick = tied.max { $0.voltageMV < $1.voltageMV }!
+        return (pick.voltageMV, pick.currentMA)
     }
 
     // Walks HPM port-controller services in IOKit registry order and returns
