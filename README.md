@@ -232,6 +232,14 @@ To add a new language:
 4. Run `plutil -lint` on your files to check for syntax errors
 5. Add the language to the picker in [`Sources/WhatCable/SettingsView.swift`](Sources/WhatCable/SettingsView.swift)
 
+### Diagnostic data
+
+The single most helpful thing you can do is hit **Contribute Diagnostic Data** in Settings. It runs a short set of C probes that gather anonymised port and power data from your Mac, then submits the results. The whole process takes a few seconds, nothing is sent without your explicit click, and no personal information is included.
+
+More device data means better hardware coverage, fewer edge-case bugs, and more accurate diagnostics for everyone. If you have unusual hardware (docks, hubs, TB5 gear, high-wattage chargers), your report is especially valuable.
+
+Cable reports are also very welcome. If you have an e-marked cable, use the "Report this cable" button in the app (or `whatcable --report` from the CLI) to submit its fingerprint. These reports build the bundled cable database so WhatCable can show brand and model info for known cables. Every report you submit helps other users identify their cables at a glance.
+
 ### Cable reports
 
 If you have a cable with an e-marker, the "Report this cable" button in the app (or `whatcable --report` from the CLI) opens a pre-filled GitHub issue with the cable's fingerprint. This helps build the bundled cable database so future users see brand/model info for known cables.
