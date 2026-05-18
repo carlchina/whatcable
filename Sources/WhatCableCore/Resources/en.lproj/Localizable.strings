@@ -280,3 +280,16 @@
 "Rate %lld" = "Rate %lld";
 "Type %lld" = "Type %lld";
 "Variable, %@ minimum @ %@, %@ minimum" = "Variable, %1$@ minimum @ %2$@, %3$@ minimum";
+
+/* Pro plugin strings missing from prior export */
+"Enter Licence Key…" = "Enter Licence Key…";
+"Negotiated PD contract. This Mac doesn't report live per-port draw, so this is the agreed maximum, not a live measurement." = "Negotiated PD contract. This Mac doesn't report live per-port draw, so this is the agreed maximum, not a live measurement.";
+"No power data for this port right now." = "No power data for this port right now.";
+"Upgrade to WhatCable Pro" = "Upgrade to WhatCable Pro";
+"not reported in this state" = "not reported in this state";
+
+/* Widget strings */
+"Cable Status" = "Cable Status";
+"No cable data" = "No cable data";
+"Open WhatCable to start monitoring." = "Open WhatCable to start monitoring.";
+"See what your USB-C cables can do at a glance." = "See what your USB-C cables can do at a glance.";

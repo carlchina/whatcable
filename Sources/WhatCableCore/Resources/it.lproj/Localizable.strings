@@ -111,3 +111,16 @@
 "high-speed data" = "dati ad alta velocità";
 "smart cable" = "Cavo con e-marker";
 "video" = "video";
+
+/* Pro plugin strings missing from prior export */
+"Enter Licence Key…" = "Inserisci chiave di licenza…";
+"Negotiated PD contract. This Mac doesn't report live per-port draw, so this is the agreed maximum, not a live measurement." = "Contratto PD negoziato. Questo Mac non riporta il consumo in tempo reale per porta, quindi questo è il massimo concordato, non una misurazione dal vivo.";
+"No power data for this port right now." = "Nessun dato di alimentazione per questa porta al momento.";
+"Upgrade to WhatCable Pro" = "Passa a WhatCable Pro";
+"not reported in this state" = "non riportato in questo stato";
+
+/* Widget strings */
+"Cable Status" = "Stato cavo";
+"No cable data" = "Nessun dato sul cavo";
+"Open WhatCable to start monitoring." = "Apri WhatCable per iniziare il monitoraggio.";
+"See what your USB-C cables can do at a glance." = "Scopri a colpo d'occhio cosa possono fare i tuoi cavi USB-C.";

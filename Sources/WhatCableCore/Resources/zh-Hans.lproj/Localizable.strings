@@ -111,3 +111,16 @@
 "high-speed data" = "高速数据";
 "smart cable" = "带 e-marker 的线缆";
 "video" = "视频";
+
+/* Pro plugin strings missing from prior export */
+"Enter Licence Key…" = "输入许可证密钥…";
+"Negotiated PD contract. This Mac doesn't report live per-port draw, so this is the agreed maximum, not a live measurement." = "已协商 PD 合同。此 Mac 不报告每端口的实时功耗，因此这是约定的最大值，不是实时测量值。";
+"No power data for this port right now." = "此端口暂无电源数据。";
+"Upgrade to WhatCable Pro" = "升级到 WhatCable Pro";
+"not reported in this state" = "此状态下未报告";
+
+/* Widget strings */
+"Cable Status" = "线缆状态";
+"No cable data" = "无线缆数据";
+"Open WhatCable to start monitoring." = "打开 WhatCable 开始监测。";
+"See what your USB-C cables can do at a glance." = "一目了然地查看 USB-C 线缆的功能。";
