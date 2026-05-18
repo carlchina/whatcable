@@ -171,13 +171,17 @@ public final class USBPDSOPWatcher: ObservableObject {
         }
     }
 
+    /// Reads the parent port type and number from the service's properties.
+    /// Same approach as `PowerSourceWatcher.parentPortIdentity(from:)`. The
+    /// BuiltIn keys must take priority so PD identity and power data resolve
+    /// to the same portKey for a given physical port.
     nonisolated static func parentPortIdentity(from dict: [String: Any]) -> (type: Int, number: Int) {
-        let type = (dict["ParentPortType"] as? NSNumber)?.intValue
-            ?? (dict["ParentBuiltInPortType"] as? NSNumber)?.intValue
+        let type = (dict["ParentBuiltInPortType"] as? NSNumber)?.intValue
+            ?? (dict["ParentPortType"] as? NSNumber)?.intValue
             ?? 0
-        let number = (dict["ParentPortNumber"] as? NSNumber)?.intValue
-            ?? (dict["ParentBuiltInPortNumber"] as? NSNumber)?.intValue
-            ?? 0
+        let number = (dict["ParentBuiltInPortNumber"] as? NSNumber)?.intValue
+            ?? (dict["ParentPortNumber"] as? NSNumber)?.intValue
+            ?? Int(((dict["Priority"] as? NSNumber)?.uint64Value ?? 0) & 0xFF)
         return (type, number)
     }
 

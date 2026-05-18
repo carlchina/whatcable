@@ -89,4 +89,28 @@ struct RegistryParsingTests {
         #expect(USBPDSOPWatcher.productID(from: dict, metadata: metadata) == 0x1234)
         #expect(USBPDSOPWatcher.bcdDevice(from: metadata) == 0x0100)
     }
+
+    @Test("USBPDSOPWatcher handles built-in parent fields and priority fallback")
+    func usbPDSOPWatcherHandlesBuiltInParentFieldsAndPriorityFallback() {
+        // When both key variants are present with different values, the
+        // BuiltIn variant must win so PD identity and power data resolve to
+        // the same portKey (matches PowerSourceWatcher's order).
+        let builtIn: [String: Any] = [
+            "ParentBuiltInPortType": NSNumber(value: 0x11),
+            "ParentBuiltInPortNumber": NSNumber(value: 2),
+            "ParentPortType": NSNumber(value: 2),
+            "ParentPortNumber": NSNumber(value: 1)
+        ]
+        let builtInParent = USBPDSOPWatcher.parentPortIdentity(from: builtIn)
+        #expect(builtInParent.type == 0x11)
+        #expect(builtInParent.number == 2)
+
+        let priority: [String: Any] = [
+            "ParentPortType": NSNumber(value: 0x11),
+            "Priority": NSNumber(value: 0x0201)
+        ]
+        let priorityParent = USBPDSOPWatcher.parentPortIdentity(from: priority)
+        #expect(priorityParent.type == 0x11)
+        #expect(priorityParent.number == 1)
+    }
 }
