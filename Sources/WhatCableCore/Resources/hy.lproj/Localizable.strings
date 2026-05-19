@@ -122,7 +122,9 @@
 "DisplayPort alt mode" = "DisplayPort alt ռեժիմ";
 
 /* Cable speed / charger status strings (previously missing keys) */
+"20 Gbps capable" = "20 Gbps հնարավորությամբ";
 "40 Gbps capable" = "40 Gbps հնարավորությամբ";
+"80 Gbps capable" = "80 Gbps հնարավորությամբ";
 "Charger connected. Battery is full, so the Mac isn't drawing power." = "Լիցքավորիչը միացված է: Մարտկոցը լիքն է, ուստի Mac-ը հոսանք չի սպառում:";
 "E-marker reports passive (no USB signal conditioning). Thunderbolt is negotiated separately by the controller." = "E-marker-ը հայտնում է պասիվ (USB ազդանշանի կարգավորում չկա): Thunderbolt-ը առանձին համաձայնեցվում է կարգավորիչի կողմից:";
 "E-marker reports passive. This is normal for Thunderbolt cables where the active electronics handle Thunderbolt, not USB." = "E-marker-ը հայտնում է պասիվ: Սա նորմալ է Thunderbolt մալուխների համար, որտեղ ակտիվ էլեկտրոնիկան մշակում է Thunderbolt-ը, ոչ թե USB-ն:";

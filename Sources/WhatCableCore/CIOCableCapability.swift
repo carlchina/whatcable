@@ -9,31 +9,42 @@ import Foundation
 /// 2M) report "passive" in their e-marker while the CIO controller
 /// correctly identifies their TB capability.
 ///
-/// Value mappings are based on 9 confirmed data points (7 TB4, 2 TB5).
-/// TB3 samples are still needed. See `research/cio-value-mappings.md`.
+/// `cableSpeed` is the genuine cable-capability signal and is now
+/// confirmed across TB3, TB4, and TB5 from real CIO probes (see
+/// `research/cio-value-mappings.md` for the data points). The other
+/// integer fields (`cableGeneration`, `generation`) do NOT track the
+/// Thunderbolt generation: probe data shows them varying per port
+/// within a single machine, including across identical TB4 links.
+/// Their meaning is unknown. They are stored raw and not used to
+/// derive any user-facing label.
 public struct CIOCableCapability: Identifiable, Hashable, Sendable {
     public let id: UInt64
     /// Port correlation key matching `PowerSource.portKey`.
     public let portKey: String
 
-    /// CIO protocol mode of the downstream controller. Not a generation
-    /// counter: 1 = legacy TB3 (pre-USB4), 2 = USB4/CIO native (TB4 and
-    /// TB5 both report 2). See `research/cio-value-mappings.md`.
+    /// Raw CIO value of unknown meaning. NOT a Thunderbolt generation
+    /// counter: one M4 machine reported 1, 2, 2 across three TB4 CIO
+    /// entries, and value 1 also appears on TB4 links (M4/M5/M3 Max/
+    /// M1 Max), not only TB3. Do not derive any label from it.
     public let cableGeneration: Int?
-    /// Cable speed capability. The one CIO field that genuinely tracks
-    /// bandwidth: 3 = 40 Gbps (TB4), 4 = 80 Gbps (TB5). TB3 expected
-    /// to be 2 but unconfirmed.
+    /// Cable speed capability from the CIO controller. The one CIO
+    /// field that genuinely tracks the cable, not the downstream
+    /// device. Confirmed: 2 = TB3 / 20 Gbps, 3 = TB4 / 40 Gbps,
+    /// 4 = TB5 / 80 Gbps.
     public let cableSpeed: Int?
-    /// CIO tunnel protocol version. Parallels `cableGeneration`:
-    /// 2 = legacy TB3, 3 = USB4/CIO native (TB4 and TB5 both report 3).
-    /// Not USB4 Gen numbering.
+    /// Raw CIO value of unknown meaning. NOT a USB4 Gen number and
+    /// not a legacy-vs-native flag: probe data is mostly 2 across
+    /// TB3, TB4, and TB5 (TB5 included), with occasional 3. Do not
+    /// derive any label from it.
     public let generation: Int?
     /// Whether the cable/link supports asymmetric mode (120/40 Gbps).
     public let asymmetricModeSupported: Bool?
-    /// True for TB3 legacy adapter connections, false for native USB4/TB4+.
+    /// Raw CIO flag. Observed `false` on every sampled connection,
+    /// including a real TB3 dock (M1 Max + ThinkPad TB3). The earlier
+    /// "true for TB3" reading is disproven; the meaning of a `true`
+    /// value is unobserved. Do not rely on it.
     public let legacyAdapter: Bool?
-    /// Link training mode reported by CIO. 1 = legacy TB3, 2 = USB4/CIO
-    /// native (TB4 and TB5). Same pattern as cableGeneration/generation.
+    /// Link training mode reported by CIO. Meaning TBD.
     public let linkTrainingMode: Int?
 
     public init(
@@ -59,13 +70,17 @@ public struct CIOCableCapability: Identifiable, Hashable, Sendable {
     /// Human-readable speed label for a confirmed `cableSpeed` value,
     /// or `nil` when the code is unrecognised.
     ///
-    /// Confirmed mappings: 3 = 40 Gbps (TB4, 7 samples), 4 = 80 Gbps
-    /// (TB5, 2 samples). Returns `nil` for unknown codes so callers
-    /// can fall back to a generic bullet rather than leaking raw IOKit
-    /// numbers into user-facing text.
+    /// Maps the CIO `cableSpeed` codes confirmed by real probes
+    /// spanning TB3, TB4, and TB5 (2 = 20 Gbps, 3 = 40 Gbps,
+    /// 4 = 80 Gbps; see `research/cio-value-mappings.md`). Returns
+    /// `nil` for unknown codes so callers can fall back to a generic
+    /// bullet rather than leaking raw IOKit numbers into user-facing
+    /// text.
     public static func speedLabel(for cableSpeed: Int) -> String? {
         switch cableSpeed {
+        case 2: return String(localized: "20 Gbps capable", bundle: _coreLocalizedBundle)
         case 3: return String(localized: "40 Gbps capable", bundle: _coreLocalizedBundle)
+        case 4: return String(localized: "80 Gbps capable", bundle: _coreLocalizedBundle)
         default: return nil
         }
     }

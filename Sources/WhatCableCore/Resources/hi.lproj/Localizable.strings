@@ -122,7 +122,9 @@
 "DisplayPort alt mode" = "DisplayPort ऑल्ट मोड";
 
 /* Cable speed / charger status strings (previously missing keys) */
+"20 Gbps capable" = "20 Gbps सक्षम";
 "40 Gbps capable" = "40 Gbps सक्षम";
+"80 Gbps capable" = "80 Gbps सक्षम";
 "Charger connected. Battery is full, so the Mac isn't drawing power." = "चार्जर कनेक्ट हुआ। बैटरी पूरी भरी है, इसलिए Mac पावर नहीं खींच रहा।";
 "E-marker reports passive (no USB signal conditioning). Thunderbolt is negotiated separately by the controller." = "e-marker पैसिव रिपोर्ट करता है (कोई USB सिग्नल कंडीशनिंग नहीं)। Thunderbolt कंट्रोलर द्वारा अलग से नेगोशिएट किया जाता है।";
 "E-marker reports passive. This is normal for Thunderbolt cables where the active electronics handle Thunderbolt, not USB." = "e-marker पैसिव रिपोर्ट करता है। यह Thunderbolt केबल के लिए सामान्य है, जहाँ सक्रिय इलेक्ट्रॉनिक्स Thunderbolt संभालते हैं, USB नहीं।";

@@ -113,7 +113,9 @@
 "video" = "video";
 
 /* Cable speed / charger status strings (previously missing keys) */
+"20 Gbps capable" = "Compatibile con 20 Gbps";
 "40 Gbps capable" = "Compatibile con 40 Gbps";
+"80 Gbps capable" = "Compatibile con 80 Gbps";
 "Charger connected. Battery is full, so the Mac isn't drawing power." = "Caricabatterie collegato. La batteria è carica, quindi il Mac non assorbe alimentazione.";
 "E-marker reports passive (no USB signal conditioning). Thunderbolt is negotiated separately by the controller." = "L'e-marker riporta passivo (nessun condizionamento del segnale USB). Thunderbolt viene negoziato separatamente dal controller.";
 "E-marker reports passive. This is normal for Thunderbolt cables where the active electronics handle Thunderbolt, not USB." = "L'e-marker riporta passivo. Ciò è normale per i cavi Thunderbolt dove l'elettronica attiva gestisce Thunderbolt, non USB.";

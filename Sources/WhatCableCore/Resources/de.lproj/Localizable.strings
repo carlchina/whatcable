@@ -122,7 +122,9 @@
 "DisplayPort alt mode" = "DisplayPort Alt Mode";
 
 /* Cable speed / charger status strings (previously missing keys) */
+"20 Gbps capable" = "20 Gbps fähig";
 "40 Gbps capable" = "40 Gbps fähig";
+"80 Gbps capable" = "80 Gbps fähig";
 "Charger connected. Battery is full, so the Mac isn't drawing power." = "Ladegerät verbunden. Der Akku ist voll, daher zieht der Mac keinen Strom.";
 "E-marker reports passive (no USB signal conditioning). Thunderbolt is negotiated separately by the controller." = "e-Marker meldet passiv (keine USB-Signalkonditionierung). Thunderbolt wird vom Controller separat ausgehandelt.";
 "E-marker reports passive. This is normal for Thunderbolt cables where the active electronics handle Thunderbolt, not USB." = "e-Marker meldet passiv. Das ist bei Thunderbolt-Kabeln normal, bei denen die aktive Elektronik Thunderbolt verarbeitet, nicht USB.";

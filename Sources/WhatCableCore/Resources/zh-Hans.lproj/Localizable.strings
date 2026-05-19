@@ -122,7 +122,9 @@
 "DisplayPort alt mode" = "DisplayPort 替代模式";
 
 /* Cable speed / charger status strings (previously missing keys) */
+"20 Gbps capable" = "支持 20 Gbps";
 "40 Gbps capable" = "支持 40 Gbps";
+"80 Gbps capable" = "支持 80 Gbps";
 "Charger connected. Battery is full, so the Mac isn't drawing power." = "充电器已连接。电池已充满，因此 Mac 未在取电。";
 "E-marker reports passive (no USB signal conditioning). Thunderbolt is negotiated separately by the controller." = "E-marker 报告为无源（无 USB 信号调理）。Thunderbolt 由控制器单独协商。";
 "E-marker reports passive. This is normal for Thunderbolt cables where the active electronics handle Thunderbolt, not USB." = "E-marker 报告为无源。对于由有源电子组件处理 Thunderbolt（而非 USB）的 Thunderbolt 线缆，这属于正常情况。";
