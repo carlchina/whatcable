@@ -932,7 +932,7 @@
       }
 
       @media (max-width: 560px) {
-        .nav-links a:not(.button) { display: none; }
+        .nav-links a:not(.button):not([href="/instructions"]) { display: none; }
         .nav-links { gap: 12px; }
         .nav .button { padding: 8px 12px; font-size: 13px; }
         .feature-grid { grid-template-columns: 1fr; }
