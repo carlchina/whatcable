@@ -51,6 +51,7 @@ public struct AppleHPMInterface: Identifiable, Hashable {
         serviceName: String,
         className: String,
         read: (String) -> Any?,
+        readAll: (() -> [String: Any]?)? = nil,
         busIndex: Int? = nil
     ) -> AppleHPMInterface? {
         // Only return things that actually look like a physical Type-C or
@@ -61,26 +62,38 @@ public struct AppleHPMInterface: Identifiable, Hashable {
             && serviceName.hasPrefix("Port-")
         guard isRealPort else { return nil }
 
-        // Build rawProperties from the known keys rather than iterating
-        // all properties. The caller reads keys individually (no bulk
-        // IORegistryEntryCreateCFProperties fetch), so enumeration of
-        // unknown keys is not possible. rawProperties is currently unused
-        // by consumers but retained for future diagnostics.
-        let knownKeys = [
-            "PortType", "PortTypeDescription", "PortDescription", "PortNumber",
-            "ConnectionActive", "ActiveCable", "OpticalCable",
-            "IOAccessoryUSBActive", "IOAccessoryUSBSuperSpeedActive",
-            "IOAccessoryUSBModeType", "IOAccessoryUSBConnectString",
-            "TransportsSupported", "TransportsActive", "TransportsProvisioned",
-            "PlugOrientation", "Plug Event Count", "ConnectionCount",
-            "Overcurrent Count", "Pin Configuration", "DisplayPortPinAssignment",
-            "IOAccessoryPowerCurrentLimits", "FW Version", "Boot Flags",
-            "LDCM_StateDescription", "FeaturesEnabled",
-            "IOAccessoryPowerMode", "IOAccessoryActivePowerMode",
-        ]
+        // Build rawProperties for CLI verbose output (`--raw` flag and
+        // `whatcable` verbose mode). When the caller provides `readAll`,
+        // use a bulk fetch to capture every key the service publishes --
+        // this preserves the complete property dump that existed before
+        // the per-key hardening work (DAR-41). Fall back to the known-key
+        // list when no bulk-fetch path is available (e.g. unit tests).
+        // HPM port-controller services are long-lived: they appear at boot
+        // and disappear on dock removal, so the teardown window where the
+        // bulk fetch can crash is narrow. All operational data fields
+        // (connectionActive, transportsActive, etc.) always come from the
+        // crash-safe per-key `read` calls above, regardless of this path.
         var raw: [String: String] = [:]
-        for key in knownKeys {
-            if let v = read(key) { raw[key] = stringifyProperty(v) }
+        if let allProps = readAll?() {
+            for (key, value) in allProps {
+                raw[key] = stringifyProperty(value)
+            }
+        } else {
+            let knownKeys = [
+                "PortType", "PortTypeDescription", "PortDescription", "PortNumber",
+                "ConnectionActive", "ActiveCable", "OpticalCable",
+                "IOAccessoryUSBActive", "IOAccessoryUSBSuperSpeedActive",
+                "IOAccessoryUSBModeType", "IOAccessoryUSBConnectString",
+                "TransportsSupported", "TransportsActive", "TransportsProvisioned",
+                "PlugOrientation", "Plug Event Count", "ConnectionCount",
+                "Overcurrent Count", "Pin Configuration", "DisplayPortPinAssignment",
+                "IOAccessoryPowerCurrentLimits", "FW Version", "Boot Flags",
+                "LDCM_StateDescription", "FeaturesEnabled",
+                "IOAccessoryPowerMode", "IOAccessoryActivePowerMode",
+            ]
+            for key in knownKeys {
+                if let v = read(key) { raw[key] = stringifyProperty(v) }
+            }
         }
 
         return AppleHPMInterface(
@@ -302,7 +315,7 @@ func stringifyProperty(_ value: Any) -> String {
     case let d as Data: return d.map { String(format: "%02X", $0) }.joined(separator: " ")
     case let a as [Any]: return "[" + a.map { stringifyProperty($0) }.joined(separator: ", ") + "]"
     case let d as [String: Any]:
-        return "{" + d.map { "\($0.key): \(stringifyProperty($0.value))" }.joined(separator: ", ") + "}"
+        return "{" + d.sorted { $0.key < $1.key }.map { "\($0.key): \(stringifyProperty($0.value))" }.joined(separator: ", ") + "}"
     default: return String(describing: value)
     }
 }

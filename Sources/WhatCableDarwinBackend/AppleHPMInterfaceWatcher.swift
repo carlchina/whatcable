@@ -185,11 +185,26 @@ public final class AppleHPMInterfaceWatcher: ObservableObject {
             IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
         }
 
+        // Pass a bulk-fetch closure for rawProperties so the CLI verbose
+        // and --raw output captures every key the HPM controller publishes,
+        // not just the 26 known operational keys. HPM port services are
+        // long-lived (boot to dock-removal), so the teardown crash window
+        // is narrow. All operational fields come from per-key `read` calls;
+        // this closure is only called to populate rawProperties.
+        func readAll() -> [String: Any]? {
+            var props: Unmanaged<CFMutableDictionary>?
+            guard IORegistryEntryCreateCFProperties(service, &props, kCFAllocatorDefault, 0) == KERN_SUCCESS else {
+                return nil
+            }
+            return props?.takeRetainedValue() as? [String: Any]
+        }
+
         return AppleHPMInterface.from(
             entryID: entryID,
             serviceName: serviceName,
             className: className,
             read: read,
+            readAll: readAll,
             busIndex: busIndex(for: service)
         )
     }

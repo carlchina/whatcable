@@ -733,6 +733,35 @@ struct PortSummaryTests {
         )
     }
 
+    @Test("USB2-only link ignores superSpeedActive and lingering USB3 transport")
+    func usb2OnlyLinkIgnoresSuperSpeedFlagAndLingeringTransport() {
+        // Issue #187: a USB-C to Micro-USB cable (physically USB 2.0 only)
+        // is reported as USB 3.2 Gen 2 (10 Gbps). The HPM port controller
+        // can leave IOAccessoryUSBSuperSpeedActive=1 set and keep a
+        // lingering IOPortTransportStateUSB3 service registered even when
+        // TransportsActive carries only USB2. The transport label must
+        // never override the authoritative TransportsActive list.
+        let port = makePort(
+            connected: true,
+            active: ["CC", "USB2"],
+            supported: ["CC", "USB2", "USB3", "CIO", "DisplayPort"],
+            superSpeed: true
+        )
+        let transport = USB3Transport(
+            id: 187, portKey: "2/1", signaling: 2,
+            signalingDescription: "Gen 2", dataRole: "host"
+        )
+        let summary = PortSummary(port: port, usb3Transports: [transport])
+        #expect(
+            summary.bullets.contains(where: { $0.contains("USB 3.2") || $0.contains("SuperSpeed") }) == false,
+            "USB3 bullet must not appear for a USB2-only link, got: \(summary.bullets)"
+        )
+        #expect(
+            summary.bullets.contains(where: { $0.contains("USB 2.0") }),
+            "USB 2.0 bullet should appear, got: \(summary.bullets)"
+        )
+    }
+
     @Test("USB3 transport wrong port key ignored")
     func usb3TransportWrongPortKeyIgnored() {
         // Transport data for a different port should not affect this port.

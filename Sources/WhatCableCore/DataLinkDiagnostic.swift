@@ -120,9 +120,13 @@ extension DataLinkDiagnostic {
         guard port.connectionActive == true else { return nil }
 
         // Pick the port's USB 3 transport (portKey is the correlation key;
-        // fall back to the only entry if the caller pre-filtered).
-        let usb3 = usb3Transports.first { $0.portKey == port.portKey }
-            ?? usb3Transports.first
+        // fall back to the only entry if the caller pre-filtered). Only
+        // trust the transport's speed when USB3 is in `TransportsActive`:
+        // the HPM port controller can leave a stale USB3 transport service
+        // around when the negotiated link is only USB 2.0 (issue #187).
+        let usb3 = port.transportsActive.contains("USB3")
+            ? (usb3Transports.first { $0.portKey == port.portKey } ?? usb3Transports.first)
+            : nil
 
         // The speed the link actually negotiated: the Thunderbolt link if
         // there is one, otherwise the USB 3 signaling generation.

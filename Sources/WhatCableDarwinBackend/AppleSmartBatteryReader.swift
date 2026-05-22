@@ -35,7 +35,7 @@ public enum AppleSmartBatteryReader {
             IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
         }
 
-        let batteryInstalled = (read("BatteryInstalled") as? Bool) ?? false
+        let batteryInstalled = boolVal(read("BatteryInstalled"))
         if !batteryInstalled {
             return Result(isDesktopMac: true, federatedIdentities: [], battery: nil)
         }

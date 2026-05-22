@@ -76,6 +76,8 @@ public final class AppleTypeCPhyWatcher: ObservableObject {
 
     public func refresh() {
         var rebuilt: [AppleTypeCPhy] = []
+        var liveEntryIDs: Set<UInt64> = []
+
         for cls in Self.candidateClasses {
             var iter: io_iterator_t = 0
             guard IOServiceGetMatchingServices(kIOMainPortDefault, IOServiceMatching(cls), &iter) == KERN_SUCCESS else {
@@ -91,10 +93,23 @@ public final class AppleTypeCPhyWatcher: ObservableObject {
                     }
                     var entryID: UInt64 = 0
                     IORegistryEntryGetRegistryEntryID(service, &entryID)
+                    liveEntryIDs.insert(entryID)
                     registerInterest(for: service, entryID: entryID)
                 }
             }
         }
+
+        // Release interest notifications for PHY services that are no longer
+        // present. The watcher only subscribes to kIOMatchedNotification (no
+        // kIOTerminatedNotification), so pruning happens here on each refresh
+        // to prevent io_object_t handles accumulating across kext reloads or
+        // power-state transitions that recycle PHY services (W2 fix).
+        for entryID in interestNotifications.keys where !liveEntryIDs.contains(entryID) {
+            if let n = interestNotifications.removeValue(forKey: entryID) {
+                IOObjectRelease(n)
+            }
+        }
+
         rebuilt.sort { $0.id < $1.id }
         if rebuilt != phys { phys = rebuilt }
     }

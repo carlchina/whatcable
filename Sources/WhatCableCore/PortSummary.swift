@@ -54,7 +54,12 @@ extension PortSummary {
         let connected = isConnectedOverride ?? (port.connectionActive == true)
         let active = port.transportsActive
         let supported = port.transportsSupported
-        let hasUSB3 = active.contains("USB3") || port.superSpeedActive == true
+        // USB3 is "live" only when `TransportsActive` says so. The HPM
+        // port controller can keep `IOAccessoryUSBSuperSpeedActive=1` and
+        // a lingering `IOPortTransportStateUSB3` service even when the
+        // negotiated link is only USB 2.0 (e.g. a Micro-USB cable that
+        // physically can't carry SuperSpeed). See issue #187.
+        let hasUSB3 = active.contains("USB3")
         let hasUSB2 = active.contains("USB2")
         let hasTB = active.contains("CIO") // Thunderbolt = Converged I/O
         let hasDP = active.contains("DisplayPort")

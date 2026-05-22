@@ -43,25 +43,27 @@ public final class DisplayPortTransportWatcher: ObservableObject {
             Task { @MainActor in watcher.handleRemoved(iterator) }
         }
 
-        IOServiceAddMatchingNotification(
+        if IOServiceAddMatchingNotification(
             port,
             kIOMatchedNotification,
             IOServiceMatching("IOPortTransportStateDisplayPort"),
             added,
             selfPtr,
             &addedIterator
-        )
-        handleAdded(addedIterator)
+        ) == KERN_SUCCESS {
+            handleAdded(addedIterator)
+        }
 
-        IOServiceAddMatchingNotification(
+        if IOServiceAddMatchingNotification(
             port,
             kIOTerminatedNotification,
             IOServiceMatching("IOPortTransportStateDisplayPort"),
             removed,
             selfPtr,
             &removedIterator
-        )
-        handleRemoved(removedIterator)
+        ) == KERN_SUCCESS {
+            handleRemoved(removedIterator)
+        }
     }
 
     public func stop() {
@@ -98,12 +100,18 @@ public final class DisplayPortTransportWatcher: ObservableObject {
 
     private func handleRemoved(_ iterator: io_iterator_t) {
         while case let service = IOIteratorNext(iterator), service != 0 {
-            let portIndex = wcPortIndex(from: [:], service: service)
-            let portType = wcPortType(from: [:], service: service)
+            defer { IOObjectRelease(service) }
+            // Use per-key reads so portIndex and portType match what makeUpdate
+            // stored, not the registry location fallback that wcPortIndex(from:[:])
+            // falls through to when the dict is empty (W1 fix).
+            func read(_ key: String) -> Any? {
+                IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
+            }
+            let portIndex = wcPortIndex(read: read, service: service)
+            let portType = wcPortType(read: read, service: service)
             statuses.removeAll {
                 $0.portIndex == portIndex && $0.portType == portType
             }
-            IOObjectRelease(service)
         }
     }
 

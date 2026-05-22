@@ -602,7 +602,7 @@ struct PortCard: View {
                     .padding(.leading, 48)
             }
 
-            if !powerSources.isEmpty {
+            if !powerSources.isEmpty && isLive {
                 PowerSourceList(sources: powerSources)
                     .padding(.leading, 48)
             }

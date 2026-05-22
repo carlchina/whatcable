@@ -14,6 +14,10 @@ public struct ChargingDiagnostic {
     public let bottleneck: Bottleneck
     public let summary: String
     public let detail: String
+    /// Charger ceiling in watts, available for display regardless of bottleneck.
+    public let chargerW: Int?
+    /// Cable rating in watts from the e-marker, available for display regardless of bottleneck.
+    public let cableW: Int?
 
     public var isWarning: Bool {
         switch bottleneck {
@@ -69,6 +73,9 @@ extension ChargingDiagnostic {
         let cableMaxW: Int? = identities
             .first(where: { $0.endpoint == .sopPrime || $0.endpoint == .sopDoublePrime })?
             .cableVDO?.maxWatts
+
+        self.chargerW = chargerMaxW > 0 ? chargerMaxW : nil
+        self.cableW = cableMaxW
 
         // Order of suspicion:
         // 1. If cable rated below charger, cable is the bottleneck.

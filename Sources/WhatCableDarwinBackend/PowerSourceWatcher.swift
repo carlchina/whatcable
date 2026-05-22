@@ -34,12 +34,14 @@ public final class PowerSourceWatcher: ObservableObject {
         }
 
         let matching = IOServiceMatching("IOPortFeaturePowerSource")
-        IOServiceAddMatchingNotification(port, kIOMatchedNotification, matching, added, selfPtr, &addedIter)
-        handleAdded(addedIter)
+        if IOServiceAddMatchingNotification(port, kIOMatchedNotification, matching, added, selfPtr, &addedIter) == KERN_SUCCESS {
+            handleAdded(addedIter)
+        }
 
         let matching2 = IOServiceMatching("IOPortFeaturePowerSource")
-        IOServiceAddMatchingNotification(port, kIOTerminatedNotification, matching2, removed, selfPtr, &removedIter)
-        handleRemoved(removedIter)
+        if IOServiceAddMatchingNotification(port, kIOTerminatedNotification, matching2, removed, selfPtr, &removedIter) == KERN_SUCCESS {
+            handleRemoved(removedIter)
+        }
     }
 
     public func stop() {

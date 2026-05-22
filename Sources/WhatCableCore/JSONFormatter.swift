@@ -147,18 +147,31 @@ private struct PortDTO: Codable {
             self.thunderboltSwitchUID = nil
         }
 
-        let deviceUsb3Speed = usbDevices
-            .first { $0.isRootDevice && ($0.speedRaw ?? 0) >= 3 }?
-            .usb3SpeedLabel
+        // `TransportsActive` is the sole authority for "USB3 is live"
+        // (issue #187). The HPM controller can leave a stale
+        // `IOPortTransportStateUSB3` service registered, assert
+        // `IOAccessoryUSBSuperSpeedActive=1`, and even keep matched
+        // `USBDevice` entries reporting SuperSpeed when the negotiated
+        // link is only USB 2.0. Gate the whole `usb3Speed` resolution on
+        // TransportsActive, not just the transport-derived fallback.
+        let usb3Speed: String?
+        if port.transportsActive.contains("USB3") {
+            let deviceUsb3Speed = usbDevices
+                .first { $0.isRootDevice && ($0.speedRaw ?? 0) >= 3 }?
+                .usb3SpeedLabel
+            usb3Speed = deviceUsb3Speed ?? usb3Transports.first?.speedLabel
+        } else {
+            usb3Speed = nil
+        }
         self.transports = TransportsDTO(
             supported: port.transportsSupported,
             active: port.transportsActive,
             provisioned: port.transportsProvisioned,
             displayPortLanes: port.dpLaneConfig?.label,
-            usb3Speed: deviceUsb3Speed ?? usb3Transports.first?.speedLabel
+            usb3Speed: usb3Speed
         )
 
-        self.powerSources = sources.map { PowerSourceDTO(source: $0) }
+        self.powerSources = port.connectionActive != false ? sources.map { PowerSourceDTO(source: $0) } : []
 
         let cableEmarker = identities.first {
             $0.endpoint == .sopPrime || $0.endpoint == .sopDoublePrime

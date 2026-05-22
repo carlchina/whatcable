@@ -42,18 +42,20 @@ public final class USBPDSOPWatcher: ObservableObject {
 
         for className in Self.matchedClasses {
             var addedIter: io_iterator_t = 0
-            IOServiceAddMatchingNotification(port, kIOMatchedNotification,
+            if IOServiceAddMatchingNotification(port, kIOMatchedNotification,
                 IOServiceMatching(className),
-                added, selfPtr, &addedIter)
-            handleAdded(addedIter)
-            iterators.append(addedIter)
+                added, selfPtr, &addedIter) == KERN_SUCCESS {
+                handleAdded(addedIter)
+                iterators.append(addedIter)
+            }
 
             var removedIter: io_iterator_t = 0
-            IOServiceAddMatchingNotification(port, kIOTerminatedNotification,
+            if IOServiceAddMatchingNotification(port, kIOTerminatedNotification,
                 IOServiceMatching(className),
-                removed, selfPtr, &removedIter)
-            handleRemoved(removedIter)
-            iterators.append(removedIter)
+                removed, selfPtr, &removedIter) == KERN_SUCCESS {
+                handleRemoved(removedIter)
+                iterators.append(removedIter)
+            }
         }
     }
 

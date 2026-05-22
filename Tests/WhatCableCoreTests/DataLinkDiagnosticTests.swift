@@ -8,7 +8,14 @@ struct DataLinkDiagnosticTests {
 
     /// Active USB-C port. Same shape as the ChargingDiagnostic fixture
     /// (the proven-compiling AppleHPMInterface init param list).
-    private func makePort(active: Bool = true) -> AppleHPMInterface {
+    /// `transportsActive` defaults to `["USB3"]` because most tests in
+    /// this suite exercise a USB3 link via `usb3Transports`. Tests that
+    /// hand-roll TB or USB2-only scenarios override it.
+    private func makePort(
+        active: Bool = true,
+        transportsActive: [String] = ["USB3"],
+        superSpeedActive: Bool? = nil
+    ) -> AppleHPMInterface {
         AppleHPMInterface(
             id: 1,
             serviceName: "Port-USB-C@1",
@@ -20,11 +27,11 @@ struct DataLinkDiagnosticTests {
             activeCable: nil,
             opticalCable: nil,
             usbActive: nil,
-            superSpeedActive: nil,
+            superSpeedActive: superSpeedActive,
             usbModeType: nil,
             usbConnectString: nil,
             transportsSupported: [],
-            transportsActive: [],
+            transportsActive: transportsActive,
             transportsProvisioned: [],
             plugOrientation: nil,
             plugEventCount: nil,
@@ -300,5 +307,26 @@ struct DataLinkDiagnosticTests {
         #expect(facts.hostGbps == 40)
         #expect(facts.activeGbps == 40)
         #expect(diag!.cableSignalConflict == true)
+    }
+
+    // MARK: - TransportsActive gating
+
+    @Test("USB2-only link ignores lingering USB3 transport (issue #187)")
+    func usb2OnlyLinkIgnoresLingeringUSB3Transport() {
+        // A USB-C to Micro-USB cable negotiates only USB 2.0, but the
+        // HPM port controller can leave a `IOPortTransportStateUSB3`
+        // service registered (carrying Gen 2 signaling) and assert
+        // `IOAccessoryUSBSuperSpeedActive=1`. Neither should produce a
+        // 10 Gbps verdict: `TransportsActive` is the authority.
+        let diag = DataLinkDiagnostic(
+            port: makePort(transportsActive: ["CC", "USB2"], superSpeedActive: true),
+            identities: [],
+            devices: [],
+            usb3Transports: [usb3(signaling: 2)],
+            cio: nil,
+            hostMaxGbps: nil
+        )
+        #expect(diag == nil,
+            "USB2-only link must not produce a USB3 data-link verdict, got: \(String(describing: diag?.bottleneck))")
     }
 }
