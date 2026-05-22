@@ -196,7 +196,7 @@ if [[ "${DRY_RUN}" == "0" ]]; then
         fi
         if [ "$i" -eq 30 ]; then
             echo "ERROR: tag not found on public after 5 minutes." >&2
-            echo "Check the mirror action: gh run list --repo darrylmorley/whatcable-app" >&2
+            echo "Check the mirror action in the upstream repository's Actions tab." >&2
             exit 1
         fi
         sleep 10

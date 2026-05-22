@@ -42,3 +42,9 @@ BLOG.md
 # folder should never receive real files; ignore it just in case.
 src/blog/uploads/
 AGENTS.md
+
+# Wrangler / Miniflare local state (geolocates the developer)
+.wrangler/
+
+# Internal architectural decision log
+DECISIONS.md

@@ -62,7 +62,7 @@
   async function promptAndStore() {
     const pat = window.prompt(
       'Paste your GitHub fine-grained personal access token.\n\n' +
-      'It must be scoped to darrylmorley/whatcable-app and have Contents: R/W and Pull requests: R/W.'
+      'It must be scoped to the configured repository and have Contents: R/W and Pull requests: R/W.'
     );
     if (!pat) {
       showMessage('Sign-in cancelled.');

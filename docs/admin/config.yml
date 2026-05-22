@@ -1,12 +1,5 @@
 # Decap CMS configuration for the WhatCable blog.
-#
-# Auth: a fine-grained GitHub PAT scoped to darrylmorley/whatcable-app is
-# stashed in localStorage by the shim in index.html. Decap's GitHub backend
-# reads it from there and uses it for all commits / PRs.
-#
-# Drafts use editorial_workflow: Decap creates a branch like
-# `cms/posts/<slug>` and opens a draft PR. Drafts stay on the private repo
-# until merged to main (mirror only fires on main pushes).
+# Auth happens client-side via the shim in index.html.
 
 backend:
   name: github
