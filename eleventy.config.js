@@ -31,10 +31,17 @@ export default async function (eleventyConfig) {
     return u.replace(/\.html$/, "").replace(/\/$/, "");
   });
 
-  eleventyConfig.addFilter("isoDate", (date) => new Date(date).toISOString());
+  // Treat "now", null, and undefined as today so templates can render
+  // a build-time stamp without juggling Date objects in frontmatter.
+  const resolveDate = (date) => {
+    if (date == null || date === "now") return new Date();
+    return new Date(date);
+  };
+
+  eleventyConfig.addFilter("isoDate", (date) => resolveDate(date).toISOString());
 
   eleventyConfig.addFilter("readableDate", (date) =>
-    new Date(date).toLocaleDateString("en-GB", {
+    resolveDate(date).toLocaleDateString("en-GB", {
       year: "numeric",
       month: "long",
       day: "numeric",

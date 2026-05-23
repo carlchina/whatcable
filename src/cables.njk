@@ -5,20 +5,6 @@ documentTitle: "USB-C Cable Database: E-Marker Fingerprints | WhatCable"
 description: "A growing database of USB-C cables with real e-marker fingerprints reported by WhatCable users. Search by brand, vendor, speed, or VID to identify what your cable actually is."
 ogImage: "https://www.whatcable.uk/screenshot.webp"
 extraHead: |
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "Dataset",
-    "name": "WhatCable cable fingerprint database",
-    "description": "Crowd-sourced USB-C cable e-marker fingerprints reported via WhatCable.",
-    "url": "https://www.whatcable.uk/cables",
-    "isPartOf": {
-      "@type": "WebSite",
-      "name": "WhatCable",
-      "url": "https://www.whatcable.uk"
-    }
-  }
-  </script>
   <style>
     .cables-page .wrap-cables { width: min(960px, calc(100% - 40px)); margin: 0 auto; }
     .cables-page main { padding: 48px 0 80px; }
@@ -91,11 +77,67 @@ extraHead: |
     .cables-cta .button.secondary { background: #fff; color: var(--ink); border: 1px solid var(--line); }
   </style>
 ---
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Dataset",
+  "name": "WhatCable cable fingerprint database",
+  "description": "Crowd-sourced USB-C cable e-marker fingerprints reported via WhatCable. Each entry records the cable's USB-IF VID/PID, cable VDO bitfield, advertised speed, power rating, and a link to the original report.",
+  "url": "https://www.whatcable.uk/cables",
+  "dateModified": {{ cabledb.updated | isoDate | dump | safe }},
+  "keywords": [
+    "USB-C", "USB4", "Thunderbolt", "Thunderbolt 5", "e-marker",
+    "USB Power Delivery", "USB-C cable database", "cable VDO", "USB-IF VID"
+  ],
+  "creator": {
+    "@type": "Person",
+    "name": "Darryl Morley",
+    "url": "https://github.com/darrylmorley"
+  },
+  "license": "https://opensource.org/licenses/MIT",
+  "isAccessibleForFree": true,
+  "distribution": [
+    {
+      "@type": "DataDownload",
+      "encodingFormat": "application/json",
+      "contentUrl": "https://www.whatcable.uk/cables.json"
+    }
+  ],
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "WhatCable",
+    "url": "https://www.whatcable.uk"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "USB-C Cable Database",
+  "url": "https://www.whatcable.uk/cables",
+  "description": "A searchable database of USB-C cables with real e-marker fingerprints reported by WhatCable users.",
+  "dateModified": {{ cabledb.updated | isoDate | dump | safe }},
+  "about": ["USB-C", "USB4", "Thunderbolt", "USB Power Delivery"],
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "WhatCable",
+    "url": "https://www.whatcable.uk"
+  },
+  "mainEntity": {
+    "@type": "ItemList",
+    "name": "Reported USB-C cables",
+    "numberOfItems": {{ cabledb.count }},
+    "itemListOrder": "https://schema.org/ItemListOrderAscending",
+    "itemListElement": {{ cabledb.itemList | dump | safe }}
+  }
+}
+</script>
 <div class="cables-page">
 <main>
   <div class="wrap-cables">
     <h1>USB-C Cable Database</h1>
-    <p class="subtitle">Last updated {{ "now" | readableDate }}.</p>
+    <p class="subtitle">Last updated {{ cabledb.updated | readableDate }}. {{ cabledb.count }} cables.</p>
 
     <p>
       Every USB-C cable with an e-marker chip reports an identity when you

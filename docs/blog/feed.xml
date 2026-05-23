@@ -10,6 +10,32 @@
     <name>Darryl Morley</name>
   </author>
   <entry>
+    <title>Hello, world</title>
+    <link href="https://www.whatcable.uk/blog/hello-world" />
+    <updated>2026-05-20T00:00:00Z</updated>
+    <id>https://www.whatcable.uk/blog/hello-world</id>
+    <content type="html">&lt;p&gt;Welcome to the WhatCable blog.&lt;/p&gt;
+&lt;p&gt;This is where I&#39;ll write about the messy, fun world underneath USB-C: why your
+fast cable charges slowly, what a Thunderbolt 5 cable actually negotiates with
+your Mac, which e-marker fields are honest and which are theatre, and the odd
+counterfeit or quirk that turns up in cable reports.&lt;/p&gt;
+&lt;h2&gt;What you&#39;ll find here&lt;/h2&gt;
+&lt;p&gt;A few rough buckets:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Releases&lt;/strong&gt;: what shipped in the latest WhatCable version, and why.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Deep dives&lt;/strong&gt;: long-form pieces on the spec, the IOKit data, and how the
+app reads it.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Investigations&lt;/strong&gt;: single-cable mysteries, mostly from community reports.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Guides&lt;/strong&gt;: practical &amp;quot;how do I know if X&amp;quot; walkthroughs.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Notes&lt;/strong&gt;: short observations, dev diary entries, posts like this one.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;How to follow along&lt;/h2&gt;
+&lt;p&gt;Drop the &lt;a href=&quot;https://www.whatcable.uk/blog/feed.xml&quot;&gt;Atom feed&lt;/a&gt; into your RSS reader and you&#39;re set. No
+newsletter, no tracking, no comments. If you want to chime in, that&#39;s what
+&lt;a href=&quot;https://github.com/darrylmorley/whatcable/issues&quot;&gt;GitHub issues&lt;/a&gt; are for.&lt;/p&gt;
+</content>
+  </entry>
+  <entry>
     <title>Why is my MacBook charging so slow? A real diagnosis.</title>
     <link href="https://www.whatcable.uk/blog/why-is-my-macbook-charging-so-slow" />
     <updated>2026-05-21T00:00:00Z</updated>
@@ -62,32 +88,6 @@
 &lt;p&gt;That&#39;s the answer to &amp;quot;why is it slow.&amp;quot; You can stop guessing.&lt;/p&gt;
 &lt;hr&gt;
 &lt;p&gt;If you want to see exactly what your own setup is negotiating, &lt;a href=&quot;https://www.whatcable.uk/&quot;&gt;WhatCable&lt;/a&gt; reads the PD contract and the cable e-marker and shows it in the menu bar. The Slow Charger Indicator tells you there&#39;s a problem. WhatCable tells you which link in the chain caused it.&lt;/p&gt;
-</content>
-  </entry>
-  <entry>
-    <title>Hello, world</title>
-    <link href="https://www.whatcable.uk/blog/hello-world" />
-    <updated>2026-05-21T00:00:00Z</updated>
-    <id>https://www.whatcable.uk/blog/hello-world</id>
-    <content type="html">&lt;p&gt;Welcome to the WhatCable blog.&lt;/p&gt;
-&lt;p&gt;This is where I&#39;ll write about the messy, fun world underneath USB-C: why your
-fast cable charges slowly, what a Thunderbolt 5 cable actually negotiates with
-your Mac, which e-marker fields are honest and which are theatre, and the odd
-counterfeit or quirk that turns up in cable reports.&lt;/p&gt;
-&lt;h2&gt;What you&#39;ll find here&lt;/h2&gt;
-&lt;p&gt;A few rough buckets:&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;strong&gt;Releases&lt;/strong&gt;: what shipped in the latest WhatCable version, and why.&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Deep dives&lt;/strong&gt;: long-form pieces on the spec, the IOKit data, and how the
-app reads it.&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Investigations&lt;/strong&gt;: single-cable mysteries, mostly from community reports.&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Guides&lt;/strong&gt;: practical &amp;quot;how do I know if X&amp;quot; walkthroughs.&lt;/li&gt;
-&lt;li&gt;&lt;strong&gt;Notes&lt;/strong&gt;: short observations, dev diary entries, posts like this one.&lt;/li&gt;
-&lt;/ul&gt;
-&lt;h2&gt;How to follow along&lt;/h2&gt;
-&lt;p&gt;Drop the &lt;a href=&quot;https://www.whatcable.uk/blog/feed.xml&quot;&gt;Atom feed&lt;/a&gt; into your RSS reader and you&#39;re set. No
-newsletter, no tracking, no comments. If you want to chime in, that&#39;s what
-&lt;a href=&quot;https://github.com/darrylmorley/whatcable/issues&quot;&gt;GitHub issues&lt;/a&gt; are for.&lt;/p&gt;
 </content>
   </entry>
   <entry>
