@@ -485,6 +485,46 @@ brew install --cask whatcable</pre>
   The report feature needs data from the cable's chip to work. If no data was read, there's nothing to report. This happens when the cable doesn't have a chip (see "Basic cable" above) or macOS hasn't queried it yet. Try a higher-wattage charger (60W+) to trigger the read.
 </p>
 
+<h3>App opens but nothing appears</h3>
+<p>
+  If you launch WhatCable and nothing shows up (no menu bar icon, no window), try these steps in order:
+</p>
+<ol>
+  <li><strong>Check the menu bar.</strong> The icon may be hidden behind the notch or other apps. Try closing a few menu bar apps and relaunching WhatCable.</li>
+  <li><strong>Quit and relaunch.</strong> Open Activity Monitor, search for "WhatCable", force-quit it if it's running, then open it again from Applications.</li>
+  <li><strong>Try the CLI.</strong> Open Terminal and run <code>whatcable</code>. If that prints port data, the hardware access is working and the issue is with the menu bar UI. Include the CLI output when filing a bug report.</li>
+  <li><strong>Collect diagnostic logs</strong> (see below) and include them in a <a href="https://github.com/darrylmorley/whatcable/issues">bug report</a>.</li>
+</ol>
+
+<h3>Collecting diagnostic logs</h3>
+<p>
+  WhatCable logs key startup steps to the macOS system log. If the app isn't behaving as expected, these logs help us figure out where it gets stuck. To capture them:
+</p>
+<ol>
+  <li>Quit WhatCable if it's running.</li>
+  <li>Open <strong>Terminal</strong> (in Applications > Utilities).</li>
+  <li>Paste this command and press Enter:<br>
+    <code>log stream --predicate 'subsystem == "uk.whatcable.whatcable"'</code><br>
+    You'll see "Filtering the log data..." and then it waits.
+  </li>
+  <li>Open WhatCable from your Applications folder.</li>
+  <li>Wait a few seconds. Log lines will appear in Terminal showing what the app did during launch.</li>
+  <li>Copy everything that appeared and include it in your <a href="https://github.com/darrylmorley/whatcable/issues">bug report</a>.</li>
+</ol>
+<p>
+  Press <kbd>Ctrl</kbd>+<kbd>C</kbd> in Terminal to stop the log stream when you're done.
+</p>
+
+<h3>Widget not appearing after an update</h3>
+<p>
+  If the desktop widget disappears after updating WhatCable (especially via Homebrew), macOS may have stale references to the old version. This was fixed in v0.14.1, which re-registers the widget on every launch. If you're on 0.14.1 or later and the widget is still missing:
+</p>
+<ol>
+  <li>Right-click the desktop, choose <strong>Edit Widgets</strong>, and remove the WhatCable widget.</li>
+  <li>Quit and relaunch WhatCable.</li>
+  <li>Add the widget again from the widget gallery.</li>
+</ol>
+
 <h2 id="good-to-know">Good to know</h2>
 <ul>
   <li>WhatCable checks for updates once every six hours. No analytics, no tracking. See the <a href="/privacy">privacy policy</a>.</li>
