@@ -45,11 +45,12 @@ Click the **gear icon** in the popover header to open Settings, where you can:
 - Launch at login
 - Run as a regular Dock app instead of a menu bar icon
 - Adjust the font size
-- Switch language (English, Armenian, Italian, Polish, Simplified Chinese, or follow your system default)
+- Show technical details (the same raw IOKit data that ⌥-click reveals)
+- Switch language (English, Armenian, Brazilian Portuguese, French, German, Hindi, Italian, Japanese, Latvian, Norwegian, Polish, Russian, Simplified Chinese, Traditional Chinese, or follow your system default)
 - Get notifications when cables are connected or disconnected
 - Contribute anonymised port and power diagnostics to improve hardware coverage (opt-in, manual)
 
-Right-click the menu bar icon for **Refresh**, a **Keep window open** toggle (handy for screenshots and demos), **Check for Updates…**, **About**, **WhatCable on GitHub**, and **Quit**.
+Right-click the menu bar icon for **Refresh**, a **Keep window open** toggle (handy for screenshots and demos), **Settings…**, **Contribute Diagnostic Data…**, **Check for Updates…**, **About**, **WhatCable on GitHub**, and **Quit**.
 
 ## WhatCable Pro
 
@@ -128,6 +129,8 @@ whatcable --watch        # stream updates as cables come and go (Ctrl+C to exit)
 whatcable --raw          # include underlying IOKit properties
 whatcable --report       # open a pre-filled GitHub issue for the connected cable
 whatcable --test-kit     # run diagnostic probes and submit anonymised data
+whatcable --desktop      # launch the GUI app in Dock mode
+whatcable --popover      # launch the GUI app in menu bar mode
 whatcable --version
 whatcable --help
 ```
@@ -257,7 +260,7 @@ Issues and PRs welcome. The code is small and tries to stay readable.
 | [`Sources/WhatCable/`](Sources/WhatCable/) | Main menu bar app UI (SwiftUI popover, settings, notifications) |
 | [`Sources/WhatCableCore/`](Sources/WhatCableCore/) | Shared diagnostic logic, PD bit decoding, text formatting |
 | [`Sources/WhatCableDarwinBackend/`](Sources/WhatCableDarwinBackend/) | IOKit watchers (port state, PD identity, power sources, USB devices, Thunderbolt fabric) |
-| [`Sources/WhatCableAppKit/`](Sources/WhatCableAppKit/) | AppKit-level window and panel management |
+| [`Sources/WhatCableAppKit/`](Sources/WhatCableAppKit/) | Plugin registry and extension points (hooks for Pro features, CLI commands, menu items) |
 | [`Sources/WhatCablePlugins/`](Sources/WhatCablePlugins/) | Pro features (power metering, licence, cable diagnostics view, liquid detection) |
 | [`Sources/WhatCableWidget/`](Sources/WhatCableWidget/) | WidgetKit extension (small/medium/large desktop widgets) |
 | [`Sources/WhatCableCLI/`](Sources/WhatCableCLI/) | CLI binary, shares Core/Backend/Plugins with the app |
