@@ -92,6 +92,10 @@ private struct PortDTO: Codable {
     /// carries the monitor's top mode. Nil when there's no active display
     /// link on this port.
     let display: DisplayDTO?
+    /// Whether a USB Billboard device is enumerated on this port. Raw signal,
+    /// no diagnosis attached (a Billboard device is often benign). Consumers
+    /// pair it with `display` to spot a probable failed Alt-Mode handshake.
+    let billboardDevicePresent: Bool
     /// UID of the host root Thunderbolt switch this port maps to, if any.
     /// Resolved via the `Socket ID` <-> `@N` join key. Encoded as Int64
     /// (signed, matching IOKit's representation; some vendors use the
@@ -207,6 +211,8 @@ private struct PortDTO: Codable {
         self.display = displayPort
             .flatMap { DisplayDiagnostic(dp: $0, cable: cableEmarker) }
             .map { DisplayDTO(diagnostic: $0) }
+
+        self.billboardDevicePresent = port.hasBillboardDevice(among: usbDevices)
 
         self.trm = trmTransports.isEmpty ? nil : trmTransports.map { TRMTransportDTO(transport: $0) }
         self.cio = cioCapability.map { CIOCableCapabilityDTO(capability: $0) }

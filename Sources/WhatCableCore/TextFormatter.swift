@@ -127,6 +127,12 @@ public enum TextFormatter {
             out += "  " + ANSI.wrap(ANSI.dim, displayDiag.detail) + "\n"
         }
 
+        // Name only, no diagnosis (a Billboard device is often benign). The
+        // Alt-Mode inference is reserved for the Pro Display screen.
+        if port.hasBillboardDevice(among: usbDevices) {
+            out += "  " + ANSI.wrap(ANSI.gray, "\u{2022}") + " " + String(localized: "Billboard device present", bundle: _coreLocalizedBundle) + "\n"
+        }
+
         if !usbDevices.isEmpty {
             let tree = USBDeviceNode.flatten(USBDeviceNode.buildTree(from: usbDevices))
             out += "\n" + ANSI.wrap(ANSI.bold, String(localized: "Connected devices:", bundle: _coreLocalizedBundle)) + "\n"

@@ -110,6 +110,19 @@ public final class USBWatcher: ObservableObject {
         let bcdUSB = (dict["bcdUSB"] as? NSNumber)?.uint16Value
         let busPower = (dict["Bus Power Available"] as? NSNumber).map { $0.intValue * 2 }
         let current = (dict["Requested Power"] as? NSNumber).map { $0.intValue * 2 }
+        let deviceClass = (dict["bDeviceClass"] as? NSNumber)?.uint8Value
+
+        // The leaf IOKit class. A Billboard device enumerates as
+        // "AppleUSBHostBillboardDevice" (a subclass of IOUSBHostDevice, so the
+        // matcher above still catches it). Used as a detection signal that
+        // doesn't depend on the product-name string.
+        // Only trust the buffer when the call succeeds; on failure IOKit does
+        // not guarantee it leaves the buffer untouched, and USBDevice's
+        // contract is that ioClassName is nil when unavailable.
+        var classBuf = [CChar](repeating: 0, count: 128)
+        let ioClassName = IOObjectGetClass(service, &classBuf) == KERN_SUCCESS
+            ? String(cString: classBuf)
+            : nil
 
         var raw: [String: String] = [:]
         for (k, v) in dict {
@@ -132,6 +145,8 @@ public final class USBWatcher: ObservableObject {
             currentMA: current,
             busIndex: busIdx,
             controllerPortName: portName,
+            deviceClass: deviceClass,
+            ioClassName: ioClassName,
             rawProperties: raw
         )
     }

@@ -109,3 +109,6 @@
 "Opens as a regular window with a Dock icon, like most apps." = "Открывается как обычное окно со значком в Dock, как большинство приложений.";
 "Get Started" = "Начать";
 "You can change this any time in Settings." = "Вы можете изменить это в любое время в Настройках.";
+
+/* Billboard device (display dimension). English; community-refined. */
+"Billboard device present" = "Billboard device present";

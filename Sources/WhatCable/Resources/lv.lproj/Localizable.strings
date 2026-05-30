@@ -109,3 +109,6 @@
 "Opens as a regular window with a Dock icon, like most apps." = "Atveras kā parasts logs ar Dock ikonu, tāpat kā lielākā daļa lietotņu.";
 "Get Started" = "Sākt";
 "You can change this any time in Settings." = "To var mainīt jebkurā laikā iestatījumos.";
+
+/* Billboard device (display dimension). English; community-refined. */
+"Billboard device present" = "Billboard device present";

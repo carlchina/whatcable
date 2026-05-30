@@ -23,6 +23,13 @@ public struct USBDevice: Identifiable, Hashable {
     /// `busIndex` when available. `nil` on machines that don't expose
     /// `UsbIOPort` on the XHCI controller.
     public let controllerPortName: String?
+    /// USB device base class (`bDeviceClass`). `0x11` is the Billboard Device
+    /// Class. `nil` when the property is absent.
+    public let deviceClass: UInt8?
+    /// The IOKit class the device enumerates as (e.g. "IOUSBHostDevice", or
+    /// "AppleUSBHostBillboardDevice" for a Billboard device). Read from
+    /// `IOObjectGetClass`. `nil` when unavailable.
+    public let ioClassName: String?
     public let rawProperties: [String: String]
 
     public init(
@@ -39,6 +46,8 @@ public struct USBDevice: Identifiable, Hashable {
         currentMA: Int?,
         busIndex: Int? = nil,
         controllerPortName: String? = nil,
+        deviceClass: UInt8? = nil,
+        ioClassName: String? = nil,
         rawProperties: [String: String]
     ) {
         self.id = id
@@ -54,7 +63,39 @@ public struct USBDevice: Identifiable, Hashable {
         self.currentMA = currentMA
         self.busIndex = busIndex
         self.controllerPortName = controllerPortName
+        self.deviceClass = deviceClass
+        self.ioClassName = ioClassName
         self.rawProperties = rawProperties
+    }
+
+    /// A USB Billboard device. The USB-C spec uses one to report the Alternate
+    /// Modes a device supports, and in particular to flag when an Alt Mode
+    /// (such as DisplayPort) was advertised but isn't fully entered. Detected
+    /// with three independent signals, any of which is sufficient:
+    ///   - `bDeviceClass == 0x11` (the spec-defined Billboard Device Class),
+    ///   - the IOKit class is Apple's Billboard device class, or
+    ///   - the product name macOS assigns ("Generic Billboard Device").
+    ///
+    /// On signal quality, deliberately not yet matching the order they're
+    /// checked: `bDeviceClass` and the IOKit class are the *durable* signals
+    /// (defined by the USB spec and by macOS's class hierarchy). The
+    /// product-name string is the *fragile* one: "Generic Billboard Device" is
+    /// a macOS-supplied label that Apple can rename on any OS bump, at which
+    /// point it silently stops matching. It currently carries the feature only
+    /// because it is the one signal we've actually seen fire on real hardware;
+    /// the live `bDeviceClass` value is still unconfirmed (the Test Kit probe
+    /// will gather it). The moment community data confirms `0x11`, that should
+    /// become the primary signal and the string match drop to a last resort.
+    /// Do not let "it shipped on the string" harden into "the string is the
+    /// real detector".
+    ///
+    /// Naming a Billboard device is always safe; any *diagnosis* from its
+    /// presence is gated separately in `DisplayDiagnostic`.
+    public var isBillboardDevice: Bool {
+        if deviceClass == 0x11 { return true }
+        if let cls = ioClassName, cls.localizedCaseInsensitiveContains("BillboardDevice") { return true }
+        if let name = productName, name.localizedCaseInsensitiveContains("Billboard") { return true }
+        return false
     }
 
     public var speedLabel: String {

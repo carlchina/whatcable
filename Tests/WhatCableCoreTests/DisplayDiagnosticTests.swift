@@ -249,4 +249,78 @@ struct DisplayDiagnosticTests {
         #expect(DisplayDiagnostic.perLaneGbps(fromDescription: "No Link") == nil)
         #expect(DisplayDiagnostic.perLaneGbps(fromDescription: nil) == nil)
     }
+
+    // MARK: - Live sample: LG UltraFine 4K over a tunnelled DP link
+
+    @Test("Live LG UltraFine 4K on tunnelled 4-lane HBR2: fine, cable exonerated")
+    func liveLGUltraFineTunnelled() throws {
+        // Real capture (M3 Max, Test Kit probe 33, 2026-05-30): a native-DP LG
+        // UltraFine 4K reached over a Thunderbolt/USB4 tunnel at 4 lanes HBR2.
+        // End to end from the real EDID bytes: 600 MHz x 24bpp = 14.4 Gbps
+        // needed, 4 x 5.4 x 0.8 = 17.3 delivered, so the link carries the top
+        // mode. The first live tunnelled sample, so it also exercises the
+        // tunnelled cable-exoneration path that only synthetic tests hit before.
+        let edid = Data(EDIDInfoTests.hexBytes(EDIDInfoTests.lgUltraFineHex))
+        let diag = try #require(
+            DisplayDiagnostic(dp: makeDP(lanes: 4, tunneled: true, edidData: edid))
+        )
+        #expect(diag.bottleneck == .fine)
+        #expect(diag.cableAssessment == .unlikelyTheCable)
+        #expect(diag.facts.monitorName == "LG UltraFine")
+        #expect(diag.facts.lanes == 4)
+    }
+
+    // MARK: - Billboard-device note (gated on a degraded link)
+
+    @Test("Billboard note fires only with a below-best-mode link present")
+    func billboardNoteOnShortfall() throws {
+        // 2-lane HBR2 falls short of the G34w's 100Hz mode -> belowMonitorMax,
+        // and a Billboard device is on the port: the note should appear.
+        let diag = try #require(
+            DisplayDiagnostic(dp: makeDP(lanes: 2), edid: g34w, billboardPresent: true)
+        )
+        #expect(diag.bottleneck == .belowMonitorMax)
+        #expect(diag.billboardNote != nil)
+    }
+
+    @Test("Billboard note fires behind a degraded adapter link too")
+    func billboardNoteOnAdapterShortfall() throws {
+        let diag = try #require(
+            DisplayDiagnostic(dp: makeDP(lanes: 2, dfpType: "HDMI"), edid: g34w, billboardPresent: true)
+        )
+        #expect(diag.bottleneck == .adapterLimit)
+        #expect(diag.billboardNote != nil)
+    }
+
+    @Test("No Billboard note when the link already carries the top mode")
+    func noBillboardNoteWhenFine() throws {
+        // 4-lane HBR2 carries the full 100Hz mode -> .fine. Even with a
+        // Billboard device present, the diagnosis must not fire: a Billboard
+        // device on a healthy link is benign.
+        let diag = try #require(
+            DisplayDiagnostic(dp: makeDP(lanes: 4), edid: g34w, billboardPresent: true)
+        )
+        #expect(diag.bottleneck == .fine)
+        #expect(diag.billboardNote == nil)
+    }
+
+    @Test("No Billboard note when the mode can't be compared")
+    func noBillboardNoteWhenUnknown() throws {
+        // No readable EDID -> .unknownMode: we can't claim "below best mode",
+        // so the corroborating signal is absent and the note stays silent.
+        let diag = try #require(
+            DisplayDiagnostic(dp: makeDP(lanes: 2), edid: nil, billboardPresent: true)
+        )
+        #expect(diag.bottleneck == .unknownMode)
+        #expect(diag.billboardNote == nil)
+    }
+
+    @Test("No Billboard note when no Billboard device is present")
+    func noBillboardNoteWhenAbsent() throws {
+        // Degraded link, but billboardPresent defaults to false: no note. This
+        // is also the inline path's behaviour (it never passes the flag).
+        let diag = try #require(DisplayDiagnostic(dp: makeDP(lanes: 2), edid: g34w))
+        #expect(diag.bottleneck == .belowMonitorMax)
+        #expect(diag.billboardNote == nil)
+    }
 }

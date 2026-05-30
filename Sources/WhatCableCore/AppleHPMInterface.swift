@@ -250,6 +250,15 @@ public struct AppleHPMInterface: Identifiable, Hashable {
         }
     }
 
+    /// Whether a USB Billboard device is enumerated on this physical port.
+    /// Reuses `matchingDevices` so the port-to-device correlation has exactly
+    /// one definition shared with every other consumer. The single source of
+    /// truth for both the inline "Billboard device present" label and the Pro
+    /// screen's gated Alt-Mode diagnosis.
+    public func hasBillboardDevice(among devices: [USBDevice]) -> Bool {
+        matchingDevices(from: devices).contains { $0.isBillboardDevice }
+    }
+
     private var carriesUSB: Bool {
         if usbActive == true || superSpeedActive == true {
             return true

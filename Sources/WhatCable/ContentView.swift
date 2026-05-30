@@ -516,6 +516,20 @@ struct PortCard: View {
                     .padding(.leading, 48)
             }
 
+            // Name only, no diagnosis: a Billboard device is often benign, so
+            // the inline card just names it. Any inference about a failed Alt
+            // Mode lives only in the Pro Display Diagnostics screen, gated on a
+            // degraded link.
+            if port.hasBillboardDevice(among: devices) {
+                HStack(alignment: .top, spacing: 6) {
+                    Text(verbatim: "•").foregroundStyle(.secondary)
+                    Text(String(localized: "Billboard device present", bundle: _appLocalizedBundle))
+                        .scaledFont(.callout)
+                    Spacer()
+                }
+                .padding(.leading, 48)
+            }
+
             if !summary.bullets.isEmpty {
                 VStack(alignment: .leading, spacing: 4) {
                     ForEach(summary.bullets, id: \.self) { bullet in

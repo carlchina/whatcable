@@ -110,3 +110,6 @@
 "Opens as a regular window with a Dock icon, like most apps." = "他のアプリと同様に、Dockアイコン付きの通常のウィンドウとして開きます。";
 "Get Started" = "はじめる";
 "You can change this any time in Settings." = "設定からいつでも変更できます。";
+
+/* Billboard device (display dimension). English; community-refined. */
+"Billboard device present" = "Billboard device present";

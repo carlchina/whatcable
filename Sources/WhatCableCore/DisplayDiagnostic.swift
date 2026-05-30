@@ -94,6 +94,23 @@ public struct DisplayDiagnostic {
     /// Cable attribution, orthogonal to `bottleneck`. Only changes the wording
     /// in the `.belowMonitorMax` case; informational elsewhere.
     public let cableAssessment: CableAssessment
+    /// Whether a USB Billboard device is enumerated on this port. Set only by
+    /// the Pro Display screen (the inline surfaces never pass it, which keeps
+    /// the Billboard *diagnosis* out of the port card by construction). Drives
+    /// `billboardNote`.
+    public let billboardPresent: Bool
+
+    /// The Billboard-device diagnosis, or `nil` when it should not be shown.
+    /// Fires only when a Billboard device is present **and** the link is below
+    /// the monitor's best mode (`isWarning`, the same `needed <= delivered`
+    /// comparison that drives the verdict, so there is one definition of
+    /// "degraded"). A Billboard device on its own is often benign (docks park
+    /// them there normally), so naming it is safe everywhere but this pointed
+    /// inference is gated on the corroborating degraded link.
+    public var billboardNote: String? {
+        guard billboardPresent, isWarning else { return nil }
+        return String(localized: "A Billboard device is present on this port. That usually appears when an Alt Mode like DisplayPort was set up but didn't fully come up. Your display is below its best mode, so a re-plug, a different cable, or a different adapter may bring it up. Some docks show a Billboard device normally, so this isn't always a fault.", bundle: _coreLocalizedBundle)
+    }
 
     /// True for the cases worth a glance in the inline verdict. `.fine` is the
     /// all-clear and `.unknownMode` is a non-event, so neither warns. Note the
@@ -118,9 +135,9 @@ extension DisplayDiagnostic {
 
     /// Production entry point. Parses the EDID from the DisplayPort node's own
     /// monitor blob, then defers to the injectable initialiser below.
-    public init?(dp: IOPortTransportStateDisplayPort, cable: USBPDSOP? = nil) {
+    public init?(dp: IOPortTransportStateDisplayPort, cable: USBPDSOP? = nil, billboardPresent: Bool = false) {
         let edid = dp.monitor?.edid.flatMap { EDIDInfo($0) }
-        self.init(dp: dp, edid: edid, cable: cable)
+        self.init(dp: dp, edid: edid, cable: cable, billboardPresent: billboardPresent)
     }
 
     /// Test seam: the parsed EDID is injected rather than read from `dp`.
@@ -130,8 +147,9 @@ extension DisplayDiagnostic {
     /// `cable` is the port's USB-PD e-marker (SOP' / SOP''), used only to tell
     /// whether the cable is active (issue #111: active cables misreport, so we
     /// never exonerate one on its e-marker).
-    public init?(dp: IOPortTransportStateDisplayPort, edid: EDIDInfo?, cable: USBPDSOP? = nil) {
+    public init?(dp: IOPortTransportStateDisplayPort, edid: EDIDInfo?, cable: USBPDSOP? = nil, billboardPresent: Bool = false) {
         guard dp.link.active else { return nil }
+        self.billboardPresent = billboardPresent
 
         let lanes = dp.link.laneCount
         let maxLanes = dp.link.maxLaneCount

@@ -110,3 +110,6 @@
 "Opens as a regular window with a Dock icon, like most apps." = "S'ouvre comme une fenêtre normale avec une icône dans le Dock, comme la plupart des apps.";
 "Get Started" = "Commencer";
 "You can change this any time in Settings." = "Vous pouvez changer cela à tout moment dans les Réglages.";
+
+/* Billboard device (display dimension). English; community-refined. */
+"Billboard device present" = "Billboard device present";

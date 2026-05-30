@@ -421,25 +421,46 @@ int main(void) {
         }
     }
 
-    // Look for Billboard class
+    // Look for Billboard class. The class macOS instantiates on Apple Silicon
+    // is "AppleUSBHostBillboardDevice"; the older "IOUSBHostBillboardDevice"
+    // name matches nothing here, which is why earlier runs reported 0. We try
+    // both so the probe works regardless of macOS naming. dumpServiceProperties
+    // already prints bDeviceClass, the spec-defined Billboard class (0x11),
+    // which we want to confirm against live hardware.
     printf("\n=== Billboard devices ===\n");
-    kr = IOServiceGetMatchingServices(kIOMainPortDefault,
-        IOServiceMatching("IOUSBHostBillboardDevice"), &iter);
-    if (kr == KERN_SUCCESS) {
+    const char *billboardClasses[] = {"AppleUSBHostBillboardDevice", "IOUSBHostBillboardDevice"};
+    int billboardCount = 0;
+    uint64_t seenIDs[64];
+    int seenCount = 0;
+    for (size_t bc = 0; bc < sizeof(billboardClasses) / sizeof(billboardClasses[0]); bc++) {
+        kr = IOServiceGetMatchingServices(kIOMainPortDefault,
+            IOServiceMatching(billboardClasses[bc]), &iter);
+        if (kr != KERN_SUCCESS) continue;
         io_service_t svc;
-        int count = 0;
         while ((svc = IOIteratorNext(iter)) != 0) {
-            char label[256];
-            snprintf(label, sizeof(label), "Billboard[%d]", count);
-            dumpServiceProperties(svc, label);
+            // Class matching includes subclasses, so if AppleUSBHostBillboardDevice
+            // is a subclass of IOUSBHostBillboardDevice the two iterators can return
+            // the same service. Dedupe by registry entry ID before counting/dumping.
+            uint64_t entryID = 0;
+            IORegistryEntryGetRegistryEntryID(svc, &entryID);
+            int alreadySeen = 0;
+            for (int s = 0; s < seenCount; s++) {
+                if (seenIDs[s] == entryID) { alreadySeen = 1; break; }
+            }
+            if (!alreadySeen) {
+                if (seenCount < (int)(sizeof(seenIDs) / sizeof(seenIDs[0]))) {
+                    seenIDs[seenCount++] = entryID;
+                }
+                char label[256];
+                snprintf(label, sizeof(label), "Billboard[%d] (%s)", billboardCount, billboardClasses[bc]);
+                dumpServiceProperties(svc, label);
+                billboardCount++;
+            }
             IOObjectRelease(svc);
-            count++;
         }
         IOObjectRelease(iter);
-        printf("  Found %d billboard devices\n", count);
-    } else {
-        printf("  No IOUSBHostBillboardDevice class found\n");
     }
+    printf("  Found %d billboard devices\n", billboardCount);
 
     return 0;
 }
