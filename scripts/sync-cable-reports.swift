@@ -67,13 +67,19 @@ func runGh() -> [[String: Any]] {
         fputs("error: could not run gh: \(error)\n", Darwin.stderr)
         exit(3)
     }
+    // Drain both pipes BEFORE waitUntilExit. gh's JSON output for the full
+    // closed-issue list now exceeds the OS pipe buffer (~64KB). If we wait
+    // for exit before reading, gh blocks trying to write into a full pipe
+    // and never exits, deadlocking the script. readDataToEndOfFile drains
+    // the pipe as gh fills it, so gh can finish and close the descriptor.
+    let data = stdout.fileHandleForReading.readDataToEndOfFile()
+    let errData = stderr.fileHandleForReading.readDataToEndOfFile()
     proc.waitUntilExit()
     if proc.terminationStatus != 0 {
-        let err = String(data: stderr.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        let err = String(data: errData, encoding: .utf8) ?? ""
         fputs("error: gh exited \(proc.terminationStatus): \(err)\n", Darwin.stderr)
         exit(4)
     }
-    let data = stdout.fileHandleForReading.readDataToEndOfFile()
     guard let json = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
         fputs("error: could not parse gh JSON output\n", Darwin.stderr)
         exit(5)
