@@ -411,3 +411,7 @@
 /* Billboard device (display dimension). English; community-refined. */
 "Billboard device present" = "Billboard device present";
 "A Billboard device is present on this port. That usually appears when an Alt Mode like DisplayPort was set up but didn't fully come up. Your display is below its best mode, so a re-plug, a different cable, or a different adapter may bring it up. Some docks show a Billboard device normally, so this isn't always a fault." = "A Billboard device is present on this port. That usually appears when an Alt Mode like DisplayPort was set up but didn't fully come up. Your display is below its best mode, so a re-plug, a different cable, or a different adapter may bring it up. Some docks show a Billboard device normally, so this isn't always a fault.";
+
+/* Display dimension: compression at the link ceiling (issue #246). */
+"Display may be using compression to reach its top mode" = "显示器可能正在使用压缩来达到其最高模式";
+"Your %@ can run %@, which uncompressed would need about %@. This link is already running every lane at a high rate, carrying about %@ (%@). Many high-resolution displays use compression (DSC) to fit their top mode through a link like this, so the link rate alone can't tell whether you're already at your best mode. If the picture looks right, it most likely is." = "您的 %@ 可以运行 %@，未压缩时大约需要 %@。此链路已经以高速率使用每条通道，传输约 %@（%@）。许多高分辨率显示器使用压缩（DSC）让最高模式通过这样的链路，因此仅凭链路速率无法判断您是否已处于最佳模式。如果画面看起来正常，那很可能就是最佳模式。";

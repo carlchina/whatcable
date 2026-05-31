@@ -412,3 +412,7 @@
 /* Billboard device (display dimension). English; community-refined. */
 "Billboard device present" = "Billboard device present";
 "A Billboard device is present on this port. That usually appears when an Alt Mode like DisplayPort was set up but didn't fully come up. Your display is below its best mode, so a re-plug, a different cable, or a different adapter may bring it up. Some docks show a Billboard device normally, so this isn't always a fault." = "A Billboard device is present on this port. That usually appears when an Alt Mode like DisplayPort was set up but didn't fully come up. Your display is below its best mode, so a re-plug, a different cable, or a different adapter may bring it up. Some docks show a Billboard device normally, so this isn't always a fault.";
+
+/* Display dimension: compression at the link ceiling (issue #246). */
+"Display may be using compression to reach its top mode" = "ディスプレイは最高モードを実現するために圧縮を使用している可能性があります";
+"Your %@ can run %@, which uncompressed would need about %@. This link is already running every lane at a high rate, carrying about %@ (%@). Many high-resolution displays use compression (DSC) to fit their top mode through a link like this, so the link rate alone can't tell whether you're already at your best mode. If the picture looks right, it most likely is." = "%@は%@で動作できますが、非圧縮では約%@が必要です。このリンクはすでにすべてのレーンを高速で使用しており、約%@（%@）を伝送しています。多くの高解像度ディスプレイは、このようなリンクで最高モードを通すために圧縮（DSC）を使用します。そのため、リンク速度だけでは、すでに最高モードになっているかどうかは判断できません。映像が正しく見えていれば、おそらく最高モードです。";

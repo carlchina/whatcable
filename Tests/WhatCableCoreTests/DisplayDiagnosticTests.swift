@@ -270,6 +270,95 @@ struct DisplayDiagnosticTests {
         #expect(diag.facts.lanes == 4)
     }
 
+    // MARK: - DSC / compression at the DisplayPort ceiling (issue #246)
+
+    /// AORUS FO32U2P: 4K240, ~56 Gbps uncompressed (2.34 GHz pixel clock x
+    /// 24bpp). EDID ceiling 240Hz. Needs DSC over any Mac DisplayPort link.
+    private let fo32 = EDIDInfo(
+        monitorName: "AORUS FO32U2P",
+        versionMajor: 1, versionMinor: 4,
+        preferredWidth: 3840, preferredHeight: 2160, preferredRefreshHz: 240,
+        preferredPixelClockHz: 2_340_000_000,
+        maxRefreshHz: 240, maxPixelClockHz: 2_340_000_000
+    )
+
+    @Test("4K240 at the DP ceiling (4-lane HBR3) reads as compression, not a warning")
+    func ceilingCompressionPlausible() throws {
+        // 56.16 Gbps uncompressed needed, 4 x 8.1 x 0.8 = 25.92 delivered. The
+        // link is at every lane and HBR3, so the gap is most likely covered by
+        // DSC, not a link the user can widen. (Issue #246.)
+        let dp = makeDP(lanes: 4, maxLanes: 4, rateDesc: "8.1 Gbps (HBR3)")
+        let diag = try #require(DisplayDiagnostic(dp: dp, edid: fo32))
+        #expect(diag.bottleneck == .compressionPlausible)
+        #expect(diag.isWarning == false)
+        // No "monitor can do more" headline, no "change your resolution" advice.
+        #expect(!diag.summary.lowercased().contains("can do more"))
+        #expect(diag.detail.lowercased().contains("compression"))
+    }
+
+    @Test("At the ceiling, even a mode DSC can't fully cover stays compressionPlausible")
+    func ceilingTriggersRegardlessOfDSCHeadroom() throws {
+        // ~100 Gbps uncompressed need over 25.92 delivered is more than a 3:1
+        // DSC ratio could carry, but the trigger is the link being at the
+        // ceiling, not DSC feasibility: there is still no wider link to select.
+        let huge = EDIDInfo(
+            monitorName: "8K panel",
+            versionMajor: 1, versionMinor: 4,
+            preferredWidth: 7680, preferredHeight: 4320, preferredRefreshHz: 60,
+            preferredPixelClockHz: 4_170_000_000,
+            maxRefreshHz: 60, maxPixelClockHz: 4_170_000_000
+        )
+        let dp = makeDP(lanes: 4, maxLanes: 4, rateDesc: "8.1 Gbps (HBR3)")
+        let diag = try #require(DisplayDiagnostic(dp: dp, edid: huge))
+        #expect(diag.bottleneck == .compressionPlausible)
+    }
+
+    @Test("HBR3 but not all lanes stays belowMonitorMax (ceiling needs every lane)")
+    func hbr3PartialLanesStillWarns() throws {
+        // 2 of 4 lanes at HBR3 = 12.96 delivered, short of the FO32's 56 Gbps.
+        // The link isn't at the ceiling (lanes < maxLanes), so the ordinary
+        // shortfall verdict stands and still warns.
+        let dp = makeDP(lanes: 2, maxLanes: 4, rateDesc: "8.1 Gbps (HBR3)")
+        let diag = try #require(DisplayDiagnostic(dp: dp, edid: fo32))
+        #expect(diag.bottleneck == .belowMonitorMax)
+        #expect(diag.isWarning == true)
+    }
+
+    @Test("All lanes but a low rate stays belowMonitorMax (ceiling needs HBR3+)")
+    func allLanesLowRateStillWarns() throws {
+        // 4 of 4 lanes but HBR2 (5.4 < 8.0): not the ceiling. A display needing
+        // more than the 17.28 delivered still gets the ordinary verdict.
+        let dp = makeDP(lanes: 4, maxLanes: 4, rateDesc: "5.4 Gbps (HBR2)")
+        let diag = try #require(DisplayDiagnostic(dp: dp, edid: fo32))
+        #expect(diag.bottleneck == .belowMonitorMax)
+    }
+
+    @Test("Tunneled DP at the ceiling also reads as compression, cable still exonerated")
+    func tunneledAtCeilingCompressionPlausible() throws {
+        // A tunnelled DP link (TB/USB4 dock) at 4/4 HBR3 short of the FO32's top
+        // mode. The adapter branch only returns for HDMI/DVI/VGA, so tunnels
+        // reach the ceiling guard: at 4 lanes HBR3 the DP link is maxed whether
+        // tunnelled or not, so "change your resolution" is the wrong advice here
+        // too. The tunnel still exonerates the cable in the structured verdict.
+        let dp = makeDP(lanes: 4, maxLanes: 4, rateDesc: "8.1 Gbps (HBR3)", tunneled: true)
+        let diag = try #require(DisplayDiagnostic(dp: dp, edid: fo32))
+        #expect(diag.bottleneck == .compressionPlausible)
+        #expect(diag.isWarning == false)
+        #expect(diag.cableAssessment == .unlikelyTheCable)
+    }
+
+    @Test("No Billboard note when the link is at the ceiling (can't claim below best mode)")
+    func noBillboardNoteWhenCompressionPlausible() throws {
+        // At the ceiling we can't say the link is below the monitor's best mode
+        // (it may be at it via DSC), so the corroborating signal the Billboard
+        // diagnosis needs is absent and the note must stay silent, even with a
+        // Billboard device present.
+        let dp = makeDP(lanes: 4, maxLanes: 4, rateDesc: "8.1 Gbps (HBR3)")
+        let diag = try #require(DisplayDiagnostic(dp: dp, edid: fo32, billboardPresent: true))
+        #expect(diag.bottleneck == .compressionPlausible)
+        #expect(diag.billboardNote == nil)
+    }
+
     // MARK: - Billboard-device note (gated on a degraded link)
 
     @Test("Billboard note fires only with a below-best-mode link present")

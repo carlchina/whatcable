@@ -636,6 +636,7 @@ private struct DisplayDTO: Codable {
         case .belowMonitorMax: self.bottleneck = "belowMonitorMax"
         case .adapterLimit: self.bottleneck = "adapterLimit"
         case .unknownMode: self.bottleneck = "unknownMode"
+        case .compressionPlausible: self.bottleneck = "compressionPlausible"
         }
         switch diagnostic.cableAssessment {
         case .unlikelyTheCable: self.cableAssessment = "unlikelyTheCable"

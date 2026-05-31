@@ -42,6 +42,12 @@ public struct DisplayDiagnostic {
         case adapterLimit
         /// Live link but no readable EDID: nothing to compare against.
         case unknownMode
+        /// The link is at the DisplayPort ceiling (every lane, HBR3 or faster)
+        /// yet short of the monitor's *uncompressed* top mode. DSC (~3:1
+        /// compression) may be carrying the top mode through the link, and
+        /// there is no wider link to select, so we can't claim the display is
+        /// under-driven. Informational, never a warning. (Issue #246.)
+        case compressionPlausible
     }
 
     /// The resolved numbers behind the verdict, for the Pro "receipts" view.
@@ -118,7 +124,7 @@ public struct DisplayDiagnostic {
     /// means "worth looking at", not "the cable is broken".
     public var isWarning: Bool {
         switch bottleneck {
-        case .fine, .unknownMode: return false
+        case .fine, .unknownMode, .compressionPlausible: return false
         case .belowMonitorMax, .adapterLimit: return true
         }
     }
@@ -132,6 +138,12 @@ extension DisplayDiagnostic {
     static let assumedBitsPerPixel = 24
     /// Don't declare a shortfall on estimation noise alone.
     static let tolerance = 0.05
+    /// Per-lane rate (Gbps) at or above which the link is running at a high
+    /// rate. HBR3 (8.1 Gbps/lane) is the ceiling over USB-C DisplayPort Alt
+    /// Mode; UHBR is higher still. At all lanes and this rate, a shortfall
+    /// against the *uncompressed* top mode is most likely covered by DSC, not
+    /// a link the user can widen (issue #246).
+    static let highRatePerLaneGbps = 8.0
 
     /// Production entry point. Parses the EDID from the DisplayPort node's own
     /// monitor blob, then defers to the injectable initialiser below.
@@ -262,6 +274,26 @@ extension DisplayDiagnostic {
             } else {
                 self.detail = String(localized: "Your \(name) is reached through a USB-C to \(sinkType) adapter, and the link isn't currently carrying the monitor's top mode (\(canDo), about \(needLabel)); it's carrying about \(haveLabel) (\(laneLabel)). With an adapter in the chain, the adapter's own limit may be the cap rather than the cable. Trying the monitor over native DisplayPort, or a higher-spec adapter, would tell you which.", bundle: _coreLocalizedBundle) + dscCaveat
             }
+            return
+        }
+
+        // The link is at the DisplayPort ceiling (every lane, HBR3 or faster)
+        // but still short of the monitor's *uncompressed* top mode. High-
+        // resolution displays use DSC (~3:1 compression) to fit a higher mode
+        // through a link like this, so the link rate alone can't tell whether
+        // the display is already at its best mode, and there is no wider link
+        // to select. Drop the "monitor can do more / change your resolution"
+        // verdict here: it is the wrong advice when the link is maxed and the
+        // picture may already be at full quality via compression. (Issue #246:
+        // a 4K240 monitor running 240Hz over HBR3 + DSC was wrongly flagged as
+        // under-driven.) Native DisplayPort only: the adapter path returned
+        // above, and DSC reasoning doesn't carry through an HDMI/DVI/VGA
+        // converter.
+        if lanes > 0, lanes == maxLanes, let perLane, perLane >= Self.highRatePerLaneGbps {
+            self.facts = baseFacts
+            self.bottleneck = .compressionPlausible
+            self.summary = String(localized: "Display may be using compression to reach its top mode", bundle: _coreLocalizedBundle)
+            self.detail = String(localized: "Your \(name) can run \(canDo), which uncompressed would need about \(needLabel). This link is already running every lane at a high rate, carrying about \(haveLabel) (\(laneLabel)). Many high-resolution displays use compression (DSC) to fit their top mode through a link like this, so the link rate alone can't tell whether you're already at your best mode. If the picture looks right, it most likely is.", bundle: _coreLocalizedBundle)
             return
         }
 
