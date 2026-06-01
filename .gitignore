@@ -48,3 +48,9 @@ AGENTS.md
 
 # Internal architectural decision log
 DECISIONS.md
+
+# Customer test-kit probe raw dumps. These are a redundant copy of the
+# WHATCABLE_PROBE_DATA KV store (re-fetchable by machine_hash:probe key).
+# Only the distilled artifacts are tracked: per-folder inspection.md and the
+# top-level rollups (index.md, assessment.md, skipped.md, candidate-cables-*.md).
+research/customer-probes/*/*.json
