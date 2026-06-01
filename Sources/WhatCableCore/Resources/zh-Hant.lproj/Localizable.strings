@@ -421,3 +421,8 @@
 "Battery Power" = "電池功率";
 "Negotiating…" = "正在協商…";
 "Waiting for live reading…" = "正在等待即時讀數…";
+
+/* Softened blank e-marker note (DAR-140) */
+"E-marker vendor ID is blank, but the cable is identified at the connector" = "E-marker 的廠商 ID 為空，但線材可在接頭處被辨識";
+"The cable's e-marker chip reports a blank vendor ID, but the connector identifies the cable as %@ (%@), a USB-IF-registered vendor. A blank e-marker VID by itself is common on genuine passive cables, so it isn't a sign of a problem." = "線材的 E-marker 晶片回報的廠商 ID 為空，但接頭將此線材辨識為 %1$@（%2$@），一個已在 USB-IF 註冊的廠商。僅 E-marker VID 為空在正品被動式線材中很常見，因此並非問題的徵兆。";
+"Cable note:" = "線材備註：";
