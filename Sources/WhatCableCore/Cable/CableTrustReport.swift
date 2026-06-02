@@ -64,8 +64,11 @@ public struct CableTrustReport: Hashable {
         //           Legitimate per spec, so this is neutral metadata, not a
         //           trust flag. Surfaced via the vendor-name path (see
         //           VendorDB.name) so the UI describes it without a warning.
-        //   anything else not in the bundled USB-IF list: fires
-        //           vidNotInUSBIFList (H3).
+        //   anything else not in the bundled USB-IF list: if the VID still
+        //           resolves to a recognised maker via the community usb.ids
+        //           list, that is a neutral note (vidCommunityKnownNotUSBIF).
+        //           If it resolves to nothing (or only the junk "Unknown"
+        //           name), it fires the vidNotInUSBIFList warning (H3).
         if identity.vendorID == 0 {
             if partnerIsRegisteredCable, let partner {
                 collected.append(.eMarkerVIDBlankRegisteredPartner(partner.vendorID))
@@ -75,7 +78,22 @@ public struct CableTrustReport: Hashable {
         } else if identity.vendorID == 0xFFFF {
             // Intentionally no flag.
         } else if !VendorDB.isRegistered(identity.vendorID) {
-            collected.append(.vidNotInUSBIFList(identity.vendorID))
+            // The VID is not in our bundled USB-IF list. Two sub-cases: a
+            // recognised maker from the community usb.ids list (a real brand
+            // our subset simply lacks) reads as a calm note; a VID that
+            // resolves to nothing, or to a placeholder name, keeps the
+            // warning, since on a clone cable that is the shape worth a
+            // closer look. The usb.ids list carries a few placeholders
+            // ("Unknown", "Prototype product Vendor ID") that must not soften.
+            let name = VendorDB.name(for: identity.vendorID)
+            let recognisedBrand = name.map {
+                $0 != "Unknown" && !$0.contains("Vendor ID")
+            } ?? false
+            if recognisedBrand {
+                collected.append(.vidCommunityKnownNotUSBIF(identity.vendorID))
+            } else {
+                collected.append(.vidNotInUSBIFList(identity.vendorID))
+            }
         }
 
         if let cv = identity.cableVDO {
@@ -144,11 +162,17 @@ public enum TrustFlag: Hashable {
     /// 1011..1111).
     case reservedCableLatencyEncoding(Int)
 
-    /// E-marker reports a non-zero vendor ID that isn't in any of our
-    /// known sources (the curated VendorDB or the bundled USB-IF list).
-    /// Could be a post-bundle assignment, a copied number, or a typo
-    /// from a knock-off chip programmer. Hedged accordingly.
+    /// E-marker reports a non-zero vendor ID that resolves to no recognised
+    /// maker (not in the USB-IF list, not a named community usb.ids entry).
+    /// Could be a post-bundle assignment, a copied number, or a typo from a
+    /// knock-off chip programmer. Hedged accordingly. A warning.
     case vidNotInUSBIFList(Int)
+
+    /// E-marker reports a vendor ID that is not in our bundled USB-IF list
+    /// but does resolve to a recognised maker in the community usb.ids list.
+    /// Our bundled USB-IF subset is not exhaustive, so a real brand can be
+    /// missing from it. This is a neutral note, not a warning.
+    case vidCommunityKnownNotUSBIF(Int)
 
     /// Cable VDO Version (bits 23..21) is a value the spec marks as
     /// Invalid for this cable type.
@@ -174,6 +198,10 @@ public enum TrustFlag: Hashable {
             // note. A blank ID with a missing or malformed VDO keeps the
             // warning.
             return corroborated ? .note : .warning
+        case .vidCommunityKnownNotUSBIF:
+            // A recognised maker that is just absent from our bundled USB-IF
+            // subset. Not a warning.
+            return .note
         default:
             return .warning
         }
@@ -188,6 +216,7 @@ public enum TrustFlag: Hashable {
         case .reservedCurrentEncoding: return "reservedCurrentEncoding"
         case .reservedCableLatencyEncoding: return "reservedCableLatencyEncoding"
         case .vidNotInUSBIFList: return "vidNotInUSBIFList"
+        case .vidCommunityKnownNotUSBIF: return "vidCommunityKnownNotUSBIF"
         case .invalidVDOVersion: return "invalidVDOVersion"
         case .invalidCableTermination: return "invalidCableTermination"
         case .eprClaimedWithLowMaxVoltage: return "eprClaimedWithLowMaxVoltage"
@@ -209,6 +238,8 @@ public enum TrustFlag: Hashable {
             return String(localized: "E-marker uses a reserved cable-latency value", bundle: _coreLocalizedBundle)
         case .vidNotInUSBIFList:
             return String(localized: "Vendor ID isn't in USB-IF's published list", bundle: _coreLocalizedBundle)
+        case .vidCommunityKnownNotUSBIF:
+            return String(localized: "Vendor is recognised but not in WhatCable's bundled USB-IF list", bundle: _coreLocalizedBundle)
         case .invalidVDOVersion:
             return String(localized: "E-marker uses an invalid VDO version", bundle: _coreLocalizedBundle)
         case .invalidCableTermination:
@@ -236,6 +267,10 @@ public enum TrustFlag: Hashable {
         case .vidNotInUSBIFList(let vid):
             let hex = String(format: "0x%04X", vid)
             return String(localized: "The cable's e-marker reports vendor \(hex), which isn't in our bundled USB-IF list. The number could be unassigned, copied, or assigned after the bundled list was generated. On its own this isn't proof of a problem, but on a clone cable it often appears alongside other inconsistencies.", bundle: _coreLocalizedBundle)
+        case .vidCommunityKnownNotUSBIF(let vid):
+            let hex = String(format: "0x%04X", vid)
+            let vendor = VendorDB.name(for: vid) ?? hex
+            return String(localized: "The vendor ID \(hex) (\(vendor)) is a recognised maker in the community USB vendor list, but not in the USB-IF list WhatCable bundles.", bundle: _coreLocalizedBundle)
         case .invalidVDOVersion(let bits):
             return String(localized: "The cable's e-marker reports VDO version \(bits), which is reserved or marked Invalid by the USB-PD spec for this cable type. Real e-marker silicon should not emit Invalid version values.", bundle: _coreLocalizedBundle)
         case .invalidCableTermination(let bits):

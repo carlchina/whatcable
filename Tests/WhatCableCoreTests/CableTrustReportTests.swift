@@ -169,9 +169,37 @@ struct CableTrustReportTests {
 
     @Test("Unregistered VID fires H3")
     func unregisteredVIDFiresH3() {
-        // 0xDEAD is not a USB-IF assignment in any source we carry.
+        // 0xDEAD is not a USB-IF assignment in any source we carry, and
+        // resolves to no name, so it stays the warning.
         let report = CableTrustReport(identity: cableIdentity(vendorID: 0xDEAD))
         #expect(report.flags == [.vidNotInUSBIFList(0xDEAD)])
+    }
+
+    @Test("Community-known VID softens to a note, not the H3 warning")
+    func communityKnownVIDSoftens() {
+        // 0x0200 (TP-Link) is in the community usb.ids list but not our
+        // bundled USB-IF subset, so it should read as the neutral
+        // vidCommunityKnownNotUSBIF note, not the vidNotInUSBIFList warning.
+        let report = CableTrustReport(identity: cableIdentity(vendorID: 0x0200))
+        #expect(report.flags == [.vidCommunityKnownNotUSBIF(0x0200)])
+        #expect(report.flags.first?.severity == .note)
+    }
+
+    @Test("Community VID with only a placeholder name keeps the warning")
+    func communityUnknownNamedVIDStillWarns() {
+        // 0x0011 is in usb.ids but its name is the placeholder "Unknown",
+        // so it must not soften: it keeps the vidNotInUSBIFList warning.
+        let report = CableTrustReport(identity: cableIdentity(vendorID: 0x0011))
+        #expect(report.flags == [.vidNotInUSBIFList(0x0011)])
+        #expect(report.flags.first?.severity == .warning)
+    }
+
+    @Test("Community VID named like a placeholder phrase keeps the warning")
+    func communityPlaceholderPhraseVIDStillWarns() {
+        // 0x6666 resolves to "Prototype product Vendor ID" in usb.ids. That
+        // is a placeholder, not a real maker, so it keeps the warning.
+        let report = CableTrustReport(identity: cableIdentity(vendorID: 0x6666))
+        #expect(report.flags == [.vidNotInUSBIFList(0x6666)])
     }
 
     @Test("Zero vendor ID does not double fire")
@@ -233,6 +261,7 @@ struct CableTrustReportTests {
         #expect(TrustFlag.reservedCurrentEncoding(3).code == "reservedCurrentEncoding")
         #expect(TrustFlag.reservedCableLatencyEncoding(0).code == "reservedCableLatencyEncoding")
         #expect(TrustFlag.vidNotInUSBIFList(0xDEAD).code == "vidNotInUSBIFList")
+        #expect(TrustFlag.vidCommunityKnownNotUSBIF(0x2DE5).code == "vidCommunityKnownNotUSBIF")
         #expect(TrustFlag.invalidVDOVersion(1).code == "invalidVDOVersion")
         #expect(TrustFlag.invalidCableTermination(0b11).code == "invalidCableTermination")
         #expect(TrustFlag.eprClaimedWithLowMaxVoltage.code == "eprClaimedWithLowMaxVoltage")

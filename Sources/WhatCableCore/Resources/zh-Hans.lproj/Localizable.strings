@@ -429,3 +429,5 @@
 "E-marker vendor ID is blank, but the cable is identified at the connector" = "E-marker 的厂商 ID 为空，但线缆可在接口处被识别";
 "The cable's e-marker chip reports a blank vendor ID, but the connector identifies the cable as %@ (%@), a USB-IF-registered vendor. A blank e-marker VID by itself is common on genuine passive cables, so it isn't a sign of a problem." = "线缆的 E-marker 芯片报告的厂商 ID 为空，但接口将该线缆识别为 %1$@（%2$@），一个已在 USB-IF 注册的厂商。仅 E-marker VID 为空在正品无源线缆中很常见，因此这并非问题的迹象。";
 "Cable note:" = "线缆备注：";
+"Vendor is recognised but not in WhatCable's bundled USB-IF list" = "厂商可识别，但不在 WhatCable 内置的 USB-IF 列表中";
+"The vendor ID %@ (%@) is a recognised maker in the community USB vendor list, but not in the USB-IF list WhatCable bundles." = "厂商 ID %1$@（%2$@）在社区 USB 厂商列表中是可识别的厂商，但不在 WhatCable 内置的 USB-IF 列表中。";

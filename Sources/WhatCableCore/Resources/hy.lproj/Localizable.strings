@@ -429,3 +429,5 @@
 "E-marker vendor ID is blank, but the cable is identified at the connector" = "E-marker-ի արտադրողի ID-ն դատարկ է, սակայն մալուխը նույնականացվում է միակցիչի մոտ";
 "The cable's e-marker chip reports a blank vendor ID, but the connector identifies the cable as %@ (%@), a USB-IF-registered vendor. A blank e-marker VID by itself is common on genuine passive cables, so it isn't a sign of a problem." = "Մալուխի E-marker չիպը հայտնում է դատարկ արտադրողի ID, սակայն միակցիչը մալուխը նույնականացնում է որպես %1$@ (%2$@)՝ USB-IF-ում գրանցված արտադրող: Դատարկ E-marker VID-ն ինքնին սովորական է իսկական պասիվ մալուխների համար, ուստի դա խնդրի նշան չէ:";
 "Cable note:" = "Մալուխի նշում.";
+"Vendor is recognised but not in WhatCable's bundled USB-IF list" = "Արտադրողը ճանաչված է, բայց WhatCable-ի հետ ներառված USB-IF ցանկում չկա";
+"The vendor ID %@ (%@) is a recognised maker in the community USB vendor list, but not in the USB-IF list WhatCable bundles." = "Արտադրողի ID %1$@ (%2$@)-ը ճանաչված արտադրող է համայնքային USB ցանկում, սակայն բացակայում է WhatCable-ի հետ մատակարարվող USB-IF ցանկից:";

@@ -89,8 +89,10 @@ struct CableDBTests {
 
     @Test("usb.ids vendor not USB-IF registered")
     func usbIDsVendorNotUSBIFRegistered() {
-        // Critical invariant: usb.ids entries resolve names for display
-        // but must NOT suppress the vidNotInUSBIFList trust flag.
+        // usb.ids entries are not USB-IF registrations, so isUSBIFRegistered
+        // stays false. (A usb.ids entry with a real brand name now reads as
+        // the neutral vidCommunityKnownNotUSBIF note in CableTrustReport; a
+        // placeholder name like 0x6666's keeps the vidNotInUSBIFList warning.)
         #expect(CableDB.isUSBIFRegistered(0x6666) == false)
     }
 

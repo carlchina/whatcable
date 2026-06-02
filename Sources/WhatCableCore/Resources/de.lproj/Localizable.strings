@@ -429,3 +429,5 @@
 "E-marker vendor ID is blank, but the cable is identified at the connector" = "e-Marker-Hersteller-ID ist leer, aber das Kabel wird am Stecker erkannt";
 "The cable's e-marker chip reports a blank vendor ID, but the connector identifies the cable as %@ (%@), a USB-IF-registered vendor. A blank e-marker VID by itself is common on genuine passive cables, so it isn't a sign of a problem." = "Der e-Marker-Chip des Kabels meldet eine leere Hersteller-ID, aber der Stecker weist das Kabel als %1$@ (%2$@) aus, einen bei USB-IF registrierten Hersteller. Eine leere e-Marker-VID allein ist bei echten passiven Kabeln üblich und daher kein Anzeichen für ein Problem.";
 "Cable note:" = "Kabelhinweis:";
+"Vendor is recognised but not in WhatCable's bundled USB-IF list" = "Hersteller ist bekannt, aber nicht in WhatCables mitgelieferter USB-IF-Liste";
+"The vendor ID %@ (%@) is a recognised maker in the community USB vendor list, but not in the USB-IF list WhatCable bundles." = "Die Hersteller-ID %1$@ (%2$@) gehört zu einem bekannten Hersteller in der Community-USB-Liste, ist aber nicht in der von WhatCable mitgelieferten USB-IF-Liste.";
