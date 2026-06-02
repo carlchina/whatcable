@@ -154,10 +154,18 @@ extension DataLinkDiagnostic {
             : nil
 
         // The speed the link actually negotiated: the Thunderbolt link if
-        // there is one, otherwise the USB 3 signaling generation.
+        // there is one, otherwise the USB 3 rate of the Mac-to-first-device
+        // link. On a hub that uplink is the only link the cable verdict is
+        // about, so we read the directly-attached (root) SuperSpeed device
+        // and ignore the slower links living deeper inside the hub. Gated on
+        // TransportsActive carrying USB3 (issue #187), mirroring the port
+        // summary's own `usb3Speed` resolution.
+        let usb3ActiveGbps = port.transportsActive.contains("USB3")
+            ? Self.usb3ActiveGbps(usb3: usb3, devices: devices)
+            : nil
         let activeGbps = tbActiveGbps
             ?? Self.activeTBGbps(port: port, switches: thunderboltSwitches)
-            ?? Self.usb3Gbps(usb3?.signaling)
+            ?? usb3ActiveGbps
 
         // Without a known active speed there is no data-speed verdict to
         // give. Returning nil keeps this off ports that are charge-only or
@@ -478,6 +486,37 @@ extension DataLinkDiagnostic {
         case 2: return 10
         default: return nil
         }
+    }
+
+    /// The negotiated USB 3 rate of the Mac-to-first-device link, in Gbps.
+    ///
+    /// On a hub, the directly-attached (root) SuperSpeed device is the
+    /// Mac-to-hub uplink, the only link the cable verdict is about. Slower
+    /// SuperSpeed links deeper inside the hub (a secondary 5 Gbps hub, a
+    /// card reader) are the hub's internal wiring, not the cable, so they
+    /// must not set the port's headline speed. We therefore prefer the root
+    /// device's enumerated speed, then fall back to the controller's USB3
+    /// transport signaling, then the port-name-matched device, exactly
+    /// matching the source order `JSONFormatter`/`PortSummary` use for
+    /// `usb3Speed`, so the headline and the bullet can never disagree
+    /// (issue #245).
+    ///
+    /// The caller gates on `TransportsActive` carrying USB3 (issue #187: the
+    /// controller can leave a stale SuperSpeed transport/device registered
+    /// on a link that is really USB 2.0); this helper assumes USB3 is live.
+    static func usb3ActiveGbps(usb3: USB3Transport?, devices: [USBDevice]) -> Double? {
+        if let root = USBDevice.rootSuperSpeed(in: devices),
+           let gbps = Self.deviceGbps(root.speedRaw) {
+            return gbps
+        }
+        if let signaled = Self.usb3Gbps(usb3?.signaling) {
+            return signaled
+        }
+        if let matched = USBDevice.portMatchedSuperSpeed(in: devices),
+           let gbps = Self.deviceGbps(matched.speedRaw) {
+            return gbps
+        }
+        return nil
     }
 
     /// CIO controller cable-speed code to Gbps. Confirmed codes:

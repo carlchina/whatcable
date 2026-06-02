@@ -962,4 +962,62 @@ struct DataLinkDiagnosticTests {
         )
         #expect(diag?.facts.hostGbps == 5)
     }
+
+    // MARK: - Hub uplink (issue #245)
+
+    @Test("USB3 hub: headline follows the Mac-to-hub uplink, not a slower deeper link (issue #245)")
+    func hubUplinkSpeedNotDeeperLink() {
+        // Satechi-hub shape from issue #245: a root 10 Gbps hub is the
+        // Mac-to-hub uplink; a secondary 5 Gbps hub sits one hop deeper
+        // inside it. The HPM USB3 transport reports the slower Gen 1 (5)
+        // link. The verdict must follow the uplink (10), matching the port
+        // summary's `usb3Speed` bullet, not the deeper 5 Gbps link. Before
+        // this fix the active rate was taken straight from the transport
+        // signaling and the headline read "Running at 5 Gbps" while the
+        // bullet said 10.
+        let rootHub = USBDevice(
+            id: 20, locationID: 0x0020_0000,        // one nibble -> root device
+            vendorID: 0x1234, productID: 0x0001,
+            vendorName: nil, productName: "4-Port USB 3.0 Hub", serialNumber: nil,
+            usbVersion: nil, speedRaw: 4,            // SuperSpeed+ 10 Gbps
+            busPowerMA: nil, currentMA: nil,
+            rawProperties: [:]
+        )
+        let deeperHub = USBDevice(
+            id: 21, locationID: 0x0024_0000,        // two nibbles -> behind the hub
+            vendorID: 0x2109, productID: 0x0817,
+            vendorName: nil, productName: "USB3.0 Hub", serialNumber: nil,
+            usbVersion: nil, speedRaw: 3,            // SuperSpeed 5 Gbps
+            busPowerMA: nil, currentMA: nil,
+            rawProperties: [:]
+        )
+
+        let diag = DataLinkDiagnostic(
+            port: makePort(transportsActive: ["CC", "USB3", "USB2"]),
+            identities: [],                          // no e-marker
+            devices: [rootHub, deeperHub],
+            usb3Transports: [usb3(signaling: 1)],    // controller reports the slow Gen 1 link
+            cio: nil
+        )
+
+        #expect(diag?.facts.activeGbps == 10)
+        #expect(diag?.bottleneck == .fine(activeGbps: 10))
+    }
+
+    @Test("USB3 without a resolvable root device still falls back to transport signaling")
+    func usb3FallsBackToTransportSignalingWithoutRootDevice() {
+        // No clean root-nibble device present (e.g. an Apple Silicon front
+        // USB-C port whose internal virtual root inflates the locationID
+        // nibbles). rootSuperSpeed is empty, so the controller's USB3
+        // signaling remains the active rate, exactly as before this fix.
+        let diag = DataLinkDiagnostic(
+            port: makePort(transportsActive: ["CC", "USB3", "USB2"]),
+            identities: [],
+            devices: [device(speedRaw: 4)],          // locationID 0x0100_0000, not a root nibble
+            usb3Transports: [usb3(signaling: 2)],    // Gen 2 (10)
+            cio: nil
+        )
+
+        #expect(diag?.facts.activeGbps == 10)
+    }
 }
