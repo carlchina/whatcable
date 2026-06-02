@@ -250,8 +250,27 @@ extension PortSummary {
 
         let negotiatedAbove3A = chargingSource?.winning?.maxCurrentMA ?? 0 > 3000
 
+        // Cable e-marker (SOP'). `hasEmarker` only means the endpoint
+        // responded; its identity VDOs can still be empty when the link never
+        // woke the e-marker (a connection at 3A or below, with no Thunderbolt,
+        // never triggers Discover Identity). Treat "endpoint present but no
+        // VDOs" as "not read on this connection", not as a blank cable.
+        // Prefer a populated cable identity: with both SOP' and SOP'' present,
+        // one can carry the VDOs while the other is empty, so a plain
+        // first(where:) could pick the empty one and wrongly read "not read".
+        let cableEmarker = identities.first(where: {
+            ($0.endpoint == .sopPrime || $0.endpoint == .sopDoublePrime) && !$0.vdos.isEmpty
+        }) ?? identities.first(where: {
+            $0.endpoint == .sopPrime || $0.endpoint == .sopDoublePrime
+        })
+        let emarkerRead = cableEmarker.map { !$0.vdos.isEmpty } ?? false
+
         if hasEmarker {
-            bullets.append(String(localized: "Cable has an e-marker chip (advertises its capabilities)", bundle: _coreLocalizedBundle))
+            if emarkerRead {
+                bullets.append(String(localized: "Cable has an e-marker chip (advertises its capabilities)", bundle: _coreLocalizedBundle))
+            } else {
+                bullets.append(String(localized: "Cable has an e-marker chip, not read on this connection (needs above 3A or Thunderbolt)", bundle: _coreLocalizedBundle))
+            }
         } else if hasPayload && !isMagSafe {
             if !pdCapable {
                 bullets.append(String(localized: "This port can't read cable details (USB-only port, no Power Delivery)", bundle: _coreLocalizedBundle))
@@ -262,10 +281,6 @@ extension PortSummary {
             }
         }
 
-        // Cable e-marker (SOP'): the cable's own capabilities.
-        let cableEmarker = identities.first(where: {
-            $0.endpoint == .sopPrime || $0.endpoint == .sopDoublePrime
-        })
         if let cable = cableEmarker, let cv = cable.cableVDO {
             let speedLabel = cv.speed.label
             bullets.append(String(localized: "Cable speed: \(speedLabel)", bundle: _coreLocalizedBundle))

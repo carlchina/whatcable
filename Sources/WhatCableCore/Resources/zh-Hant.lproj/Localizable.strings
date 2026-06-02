@@ -430,3 +430,4 @@
 "Cable note:" = "線材備註：";
 "Vendor is recognised but not in WhatCable's bundled USB-IF list" = "廠商可識別，但不在 WhatCable 內建的 USB-IF 清單中";
 "The vendor ID %@ (%@) is a recognised maker in the community USB vendor list, but not in the USB-IF list WhatCable bundles." = "廠商 ID %1$@（%2$@）在社群 USB 廠商清單中是可識別的廠商，但不在 WhatCable 內建的 USB-IF 清單中。";
+"Cable has an e-marker chip, not read on this connection (needs above 3A or Thunderbolt)" = "線材有 e-marker 晶片，但本次連線未讀取（需要超過 3A 或 Thunderbolt）";

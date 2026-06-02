@@ -53,6 +53,22 @@ struct CableTrustReportTests {
         #expect(report.flags == [.zeroVendorID(corroborated: true)])
     }
 
+    @Test("Unread e-marker (no VDOs) produces no flags")
+    func unreadEmarkerProducesNoFlags() {
+        // Endpoint present but no identity VDOs read (a 3A-or-below,
+        // non-Thunderbolt link never wakes the e-marker). There is nothing to
+        // judge, so no flags fire, not a false zeroVendorID warning. A
+        // genuinely zeroed cable still carries VDOs and is unaffected.
+        let identity = USBPDSOP(
+            id: 1, endpoint: .sopPrime,
+            parentPortType: 0, parentPortNumber: 0,
+            vendorID: 0, productID: 0, bcdDevice: 0,
+            vdos: [], specRevision: 3
+        )
+        let report = CableTrustReport(identity: identity)
+        #expect(report.isEmpty)
+    }
+
     @Test("Reserved speed encoding flags")
     func reservedSpeedEncodingFlags() {
         // speed=5 (reserved), current=1 (3A), valid latency

@@ -147,6 +147,30 @@ struct CableReportTests {
         #expect(md.contains("### Raw VDOs") == false)
     }
 
+    @Test("Markdown notes when the e-marker was not read")
+    func markdownNotesUnreadEmarker() {
+        // Endpoint present but no VDOs: the e-marker was not woken on this
+        // connection. The report should say so, so a blank vendor ID is not
+        // mistaken for a faulty or counterfeit cable.
+        let id = USBPDSOP(
+            id: 1,
+            endpoint: .sopPrime,
+            parentPortType: 0,
+            parentPortNumber: 0,
+            vendorID: 0,
+            productID: 0,
+            bcdDevice: 0,
+            vdos: [],
+            specRevision: 3
+        )
+        let md = CableReport.payload(for: id)!.markdown
+        #expect(md.contains("e-marker was not read on this connection"))
+        // The fingerprint rows must not show a bogus 0x0000: the identity was
+        // not read, so they read "not read on this connection" too.
+        #expect(md.contains("| Vendor ID | not read on this connection |"))
+        #expect(md.contains("0x0000") == false)
+    }
+
     // MARK: - USB-IF certification ID (from Cert Stat VDO)
 
     @Test("USB-IF cert ID present when non-zero")

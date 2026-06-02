@@ -224,12 +224,63 @@ struct PortSummaryTests {
             id: 99, endpoint: .sopPrime,
             parentPortType: 0, parentPortNumber: 0,
             vendorID: 0, productID: 0, bcdDevice: 0,
-            vdos: [], specRevision: 0
+            vdos: [(3 << 27), 0, 0, (0b10 << 5) | 0b011 | (1 << 13)], specRevision: 0
         )
         let summary = PortSummary(port: port, identities: [cable])
         #expect(
             summary.bullets.contains(where: { $0.contains("e-marker") && $0.contains("advertises") }),
             "expected an e-marker bullet, got bullets: \(summary.bullets)"
+        )
+    }
+
+    @Test("E-marker present but not read shows the not-read bullet, not advertises")
+    func unreadEmarkerShowsNotReadBullet() {
+        // Endpoint present but no identity VDOs: a connection at 3A or below,
+        // no Thunderbolt, never wakes the e-marker. We should say "not read",
+        // not claim the cable advertises capabilities it never sent.
+        let port = makePort(active: ["USB2"], supported: ["CC", "USB2"])
+        let cable = USBPDSOP(
+            id: 99, endpoint: .sopPrime,
+            parentPortType: 0, parentPortNumber: 0,
+            vendorID: 0, productID: 0, bcdDevice: 0,
+            vdos: [], specRevision: 0
+        )
+        let summary = PortSummary(port: port, identities: [cable])
+        #expect(
+            summary.bullets.contains(where: { $0.contains("e-marker") && $0.contains("not read") }),
+            "expected a not-read e-marker bullet, got: \(summary.bullets)"
+        )
+        #expect(
+            summary.bullets.contains(where: { $0.contains("advertises") }) == false,
+            "should not claim the cable advertises capabilities when its e-marker was not read"
+        )
+    }
+
+    @Test("Populated SOP'' wins over an empty SOP' (reads, not 'not read')")
+    func populatedEndpointWinsOverEmptyOne() {
+        // Both cable endpoints present: SOP' empty, SOP'' populated. We should
+        // read the populated one and say "advertises", not "not read".
+        let port = makePort(active: ["USB3"], supported: ["CC", "USB2", "USB3"], superSpeed: true)
+        let emptySOP = USBPDSOP(
+            id: 98, endpoint: .sopPrime,
+            parentPortType: 0, parentPortNumber: 0,
+            vendorID: 0, productID: 0, bcdDevice: 0,
+            vdos: [], specRevision: 0
+        )
+        let populatedSOPp = USBPDSOP(
+            id: 99, endpoint: .sopDoublePrime,
+            parentPortType: 0, parentPortNumber: 0,
+            vendorID: 0, productID: 0, bcdDevice: 0,
+            vdos: [(3 << 27), 0, 0, (0b10 << 5) | 0b011 | (1 << 13)], specRevision: 0
+        )
+        let summary = PortSummary(port: port, identities: [emptySOP, populatedSOPp])
+        #expect(
+            summary.bullets.contains(where: { $0.contains("e-marker") && $0.contains("advertises") }),
+            "expected the populated endpoint to win, got: \(summary.bullets)"
+        )
+        #expect(
+            summary.bullets.contains(where: { $0.contains("not read") }) == false,
+            "should not say 'not read' when one endpoint carries VDOs"
         )
     }
 
@@ -321,7 +372,7 @@ struct PortSummaryTests {
             id: 99, endpoint: .sopPrime,
             parentPortType: 0, parentPortNumber: 0,
             vendorID: 0, productID: 0, bcdDevice: 0,
-            vdos: [], specRevision: 0
+            vdos: [(3 << 27), 0, 0, (0b10 << 5) | 0b011 | (1 << 13)], specRevision: 0
         )
         let summary = PortSummary(port: port, identities: [cable])
         #expect(

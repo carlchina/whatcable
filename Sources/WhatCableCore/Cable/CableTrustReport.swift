@@ -32,6 +32,18 @@ public struct CableTrustReport: Hashable {
             return
         }
 
+        // The e-marker endpoint can be present with no identity VDOs read: a
+        // connection at 3A or below, with no Thunderbolt, never wakes the
+        // e-marker, so its vendor ID parses as 0 with no capability data. That
+        // is "not read on this connection", not a blank or suspicious cable,
+        // and there is nothing to judge. Emit no flags so we don't fire a
+        // false zeroVendorID warning. A genuinely zeroed cable still carries
+        // its VDOs (a populated ID header and Cable VDO), so it is unaffected.
+        guard !identity.vdos.isEmpty else {
+            self.flags = []
+            return
+        }
+
         var collected: [TrustFlag] = []
 
         // Does the plug (SOP partner) declare itself a cable with a

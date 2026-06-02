@@ -151,8 +151,18 @@ extension CableReport.Payload {
         lines.append("")
         lines.append("| Field | Value |")
         lines.append("|---|---|")
-        lines.append("| Vendor ID | `\(cable.vendorIDHex)` (\(cable.vendorName)) |")
-        lines.append("| Product ID | `\(cable.productIDHex)` |")
+        if cable.hasEmarker && cable.vdos.isEmpty {
+            // E-marker present but its identity was not read on this
+            // connection (see the note below). Don't emit a 0x0000 vendor /
+            // product, which reads as a real but blank fingerprint. A non-hex
+            // value also makes sync-cable-reports skip it rather than file a
+            // bogus zeroed row.
+            lines.append("| Vendor ID | not read on this connection |")
+            lines.append("| Product ID | not read on this connection |")
+        } else {
+            lines.append("| Vendor ID | `\(cable.vendorIDHex)` (\(cable.vendorName)) |")
+            lines.append("| Product ID | `\(cable.productIDHex)` |")
+        }
         if let speed = cable.speed {
             lines.append("| Cable speed | \(speed) |")
         }
@@ -179,6 +189,15 @@ extension CableReport.Payload {
             }
         }
         lines.append("")
+        if cable.hasEmarker && cable.vdos.isEmpty {
+            // Endpoint present but no identity VDOs were read: the link never
+            // woke the e-marker (a connection at 3A or below, no Thunderbolt).
+            // Spell that out so the blank vendor ID is not read as a faulty or
+            // counterfeit cable. A note paragraph, not a table row, so
+            // sync-cable-reports still parses the fingerprint cleanly.
+            lines.append("> Note: this cable's e-marker was not read on this connection. macOS only reads it above 3A or over Thunderbolt, so no vendor or capability data is shown. This does not mean the cable is blank or faulty.")
+            lines.append("")
+        }
         if !cable.vdos.isEmpty {
             lines.append("### Raw VDOs")
             lines.append("")
