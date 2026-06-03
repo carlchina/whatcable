@@ -35,6 +35,7 @@
 "Charging only" = "仅充电";
 "Charging well at %lldW" = "正在以 %lldW 正常充电";
 "Charging · %lldW charger" = "正在充电 · %lldW 充电器";
+"System reports charger at %lldW" = "系统报告充电器为 %lldW";
 "Charging: " = "充电：";
 "Connected devices:" = "已连接设备：";
 "Connected" = "已连接";

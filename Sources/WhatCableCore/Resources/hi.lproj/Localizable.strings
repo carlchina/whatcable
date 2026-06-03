@@ -35,6 +35,7 @@
 "Charging only" = "केवल चार्जिंग";
 "Charging well at %lldW" = "%lld W पर अच्छी चार्जिंग";
 "Charging · %lldW charger" = "चार्जिंग · %lld W चार्जर";
+"System reports charger at %lldW" = "सिस्टम के अनुसार चार्जर %lld W";
 "Charging: " = "चार्जिंग: ";
 "Connected devices:" = "कनेक्टेड डिवाइस:";
 "Connected" = "कनेक्टेड";

@@ -35,6 +35,7 @@
 "Charging only" = "충전 전용";
 "Charging well at %lldW" = "%lldW로 원활하게 충전 중";
 "Charging · %lldW charger" = "충전 중 · %lldW 충전기";
+"System reports charger at %lldW" = "시스템에서 %lldW 충전기로 보고함";
 "Charging: " = "충전 중: ";
 "Connected devices:" = "연결된 기기:";
 "Connected" = "연결됨";

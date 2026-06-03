@@ -35,6 +35,7 @@
 "Charging only" = "Solo carica";
 "Charging well at %lldW" = "carica corretta a %lldW";
 "Charging · %lldW charger" = "In carica · caricatore %lldW";
+"System reports charger at %lldW" = "Il sistema rileva un caricatore %lldW";
 "Charging: " = "In carica: ";
 "Connected devices:" = "Dispositivi connessi:";
 "Connected" = "Connesso";

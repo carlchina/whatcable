@@ -35,6 +35,7 @@
 "Charging only" = "Nur Laden";
 "Charging well at %lldW" = "Gutes Laden mit %lld W";
 "Charging · %lldW charger" = "Laden · %lld-W-Ladegerät";
+"System reports charger at %lldW" = "System meldet Ladegerät mit %lld W";
 "Charging: " = "Laden: ";
 "Connected devices:" = "Verbundene Geräte:";
 "Connected" = "Verbunden";

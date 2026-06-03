@@ -35,6 +35,7 @@
 "Charging only" = "Charging only";
 "Charging well at %lldW" = "Charging well at %lldW";
 "Charging · %lldW charger" = "Charging · %lldW charger";
+"System reports charger at %lldW" = "System reports charger at %lldW";
 "Charging: " = "Charging: ";
 "Connected devices:" = "Connected devices:";
 "Connected" = "Connected";

@@ -35,6 +35,7 @@
 "Charging only" = "Только зарядка";
 "Charging well at %lldW" = "Уверенная зарядка %lld Вт";
 "Charging · %lldW charger" = "Зарядка · ЗУ %lld Вт";
+"System reports charger at %lldW" = "Система сообщает о ЗУ %lld Вт";
 "Charging: " = "Зарядка: ";
 "Connected devices:" = "Подключённые устройства:";
 "Connected" = "Подключено";

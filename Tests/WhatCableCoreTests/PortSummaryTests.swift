@@ -731,6 +731,102 @@ struct PortSummaryTests {
             "Charger present with no active transports should be .charging, not .unknown")
     }
 
+    @Test("Battery full with adapter wattage but no live contract (issue #278)")
+    func batteryFullAdapterWattageNoContract() {
+        // Reporter's case: charger plugged in, battery full so macOS tore the
+        // PD contract down (no PowerSource), but the CC comms line is still
+        // active. The system adapter resolves to 100W. Must surface that as
+        // "battery full", not the misleading "try a higher-wattage charger".
+        let port = makePort(
+            connected: true,
+            active: ["CC"],
+            supported: ["CC", "USB2", "USB3", "CIO", "DisplayPort"]
+        )
+        let summary = PortSummary(
+            port: port,
+            chargerWattageSource: .systemAdapterFallback(watts: 100),
+            batteryFullyCharged: true
+        )
+        #expect(summary.status == .batteryFull)
+        #expect(summary.headline == "Plugged in · battery full")
+        #expect(
+            !summary.subtitle.contains("higher-wattage"),
+            "Should not nag for a higher-wattage charger when one is known, got: \(summary.subtitle)"
+        )
+        // The reporter's actual complaint: show the wattage. The battery-full
+        // headline carries no number, so it must surface as a bullet even with
+        // no live PD contract.
+        #expect(
+            summary.bullets.contains("System reports charger at 100W"),
+            "Battery-full charger wattage should appear as a bullet, got: \(summary.bullets)"
+        )
+    }
+
+    @Test("Adapter wattage, no live contract, battery charging (issue #278)")
+    func adapterWattageNoContractWhileCharging() {
+        // Same shape but the battery is not full: show the resolved wattage
+        // as an active charge rather than dropping into .unknown.
+        let port = makePort(
+            connected: true,
+            active: ["CC"],
+            supported: ["CC", "USB2", "USB3", "CIO", "DisplayPort"]
+        )
+        let summary = PortSummary(
+            port: port,
+            chargerWattageSource: .systemAdapterFallback(watts: 100),
+            batteryFullyCharged: false
+        )
+        #expect(summary.status == .charging)
+        #expect(summary.headline == "Charging · 100W charger")
+    }
+
+    @Test("Empty active + USB2 + resolved wattage shows charger, not 'Charging only' (issue #278)")
+    func emptyActiveResolvedWattageBeatsChargingOnly() {
+        // Branch-ordering guard (CodeRabbit): a charge-only cable with no
+        // active transports but a resolved fallback wattage must surface the
+        // charger, not the generic "Charging only" that sits in the same
+        // active.isEmpty + USB2 region.
+        let port = makePort(connected: true, active: [], supported: ["USB2"])
+        let charging = PortSummary(
+            port: port,
+            chargerWattageSource: .systemAdapterFallback(watts: 60),
+            batteryFullyCharged: false
+        )
+        #expect(charging.status == .charging)
+        #expect(charging.headline == "Charging · 60W charger")
+        #expect(charging.bullets.contains("System reports charger at 60W"))
+
+        let full = PortSummary(
+            port: port,
+            chargerWattageSource: .systemAdapterFallback(watts: 60),
+            batteryFullyCharged: true
+        )
+        #expect(full.status == .batteryFull)
+        #expect(full.headline == "Plugged in · battery full")
+        #expect(full.bullets.contains("System reports charger at 60W"))
+    }
+
+    @Test("Empty active + USB2 + no wattage still shows 'Charging only' (issue #278 guard)")
+    func emptyActiveNoWattageStillChargingOnly() {
+        // The reorder must not steal the genuine no-charger case: with no
+        // resolved wattage, the generic "Charging only" branch still owns it.
+        let port = makePort(connected: true, active: [], supported: ["USB2"])
+        let summary = PortSummary(port: port)
+        #expect(summary.status == .charging)
+        #expect(summary.headline == "Charging only")
+    }
+
+    @Test("CC active with no resolved wattage stays unknown (issue #278 guard)")
+    func ccActiveNoWattageStaysUnknown() {
+        // Regression guard: the new branch must only fire when a wattage is
+        // actually resolved. With no charger reading, a bare CC-active port
+        // is genuinely unknown and should still nudge for a better charger.
+        let port = makePort(connected: true, active: ["CC"], supported: ["CC"])
+        let summary = PortSummary(port: port)
+        #expect(summary.status == .unknown)
+        #expect(summary.headline == "Connected")
+    }
+
     @Test("Pure unknown has no bullets")
     func pureUnknownHasNoBullets() {
         // Connected but truly zero data: no transports, no charger,

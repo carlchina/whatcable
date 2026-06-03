@@ -35,6 +35,7 @@
 "Charging only" = "Միայն լիցքավորում";
 "Charging well at %lldW" = "Լիցքավորվում է %lldW հզորությամբ";
 "Charging · %lldW charger" = "Լիցքավորում · %lldW լիցքավորիչ";
+"System reports charger at %lldW" = "Համակարգը հաղորդում է %lldW լիցքավորիչ";
 "Charging: " = "Լիցքավորում՝";
 "Connected devices:" = "Միացված սարքեր՝";
 "Connected" = "Միացված է";

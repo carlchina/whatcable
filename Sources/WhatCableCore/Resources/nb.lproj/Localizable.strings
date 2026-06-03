@@ -35,6 +35,7 @@
 "Charging only" = "Kun lading";
 "Charging well at %lldW" = "God lading med %lld W";
 "Charging · %lldW charger" = "Lading · %lld W-lader";
+"System reports charger at %lldW" = "Systemet rapporterer %lld W-lader";
 "Charging: " = "Lading: ";
 "Connected devices:" = "Tilkoblede enheter:";
 "Connected" = "Tilkoblet";

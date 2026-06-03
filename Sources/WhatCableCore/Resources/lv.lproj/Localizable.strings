@@ -35,6 +35,7 @@
 "Charging only" = "Tikai uzlāde";
 "Charging well at %lldW" = "Laba uzlāde ar %lld W";
 "Charging · %lldW charger" = "Uzlāde · %lld W lādētājs";
+"System reports charger at %lldW" = "Sistēma ziņo par %lld W lādētāju";
 "Charging: " = "Uzlāde: ";
 "Connected devices:" = "Pievienotās ierīces:";
 "Connected" = "Savienots";

@@ -414,6 +414,22 @@ extension PortSummary {
                 let watts = win.wattsLabel
                 bullets.append(String(localized: "Currently negotiated: \(volts) @ \(amps) (\(watts))", bundle: _coreLocalizedBundle))
             }
+        } else if case .systemAdapterFallback(let w) = chargerWattageSource, w > 0 {
+            // No live USB-PD source on this port (e.g. the battery is full so
+            // macOS tore the contract down), but the system adapter reading
+            // still resolves to a charger for this port. Surface its brand and
+            // wattage so the number is visible even without a negotiated
+            // contract. Mirrors the `if let chargingSource` block above; the
+            // two are mutually exclusive (the Brick-ID fallback keeps a live
+            // source, so it stays in that branch). See issue #278.
+            if let manufacturer = adapter?.manufacturer, !manufacturer.isEmpty {
+                if let name = adapter?.name, !name.isEmpty {
+                    bullets.append(String(localized: "Charger: \(manufacturer) \(name)", bundle: _coreLocalizedBundle))
+                } else {
+                    bullets.append(String(localized: "Charger: \(manufacturer)", bundle: _coreLocalizedBundle))
+                }
+            }
+            bullets.append(String(localized: "System reports charger at \(w)W", bundle: _coreLocalizedBundle))
         }
 
         // Headline wattage: prefer the resolved source, fall back to
@@ -494,6 +510,26 @@ extension PortSummary {
                 self.headline = String(localized: "Charging", bundle: _coreLocalizedBundle) + cableLimitSuffix
             }
             self.subtitle = String(localized: "Power is flowing. No data connection.", bundle: _coreLocalizedBundle)
+        } else if let w = chargerW {
+            // A charger is present on this port (the system adapter reading
+            // resolved a wattage for it) but there's no live USB-PD contract
+            // to read, e.g. the battery is full so macOS tore the contract
+            // down, or a charge-only cable never negotiated one. Placed above
+            // the generic `active.isEmpty` "Charging only" branch so a known
+            // charger wattage is surfaced ("Charging · NW") instead of the
+            // bare "Charging only" / "try a higher-wattage charger". See #278.
+            if batteryFullyCharged == true {
+                self.status = .batteryFull
+                self.headline = String(localized: "Plugged in · battery full", bundle: _coreLocalizedBundle)
+                // Battery-full state is shown by the charging banner instead,
+                // so the subtitle here would just repeat it. Left empty; the
+                // render sites skip an empty subtitle.
+                self.subtitle = ""
+            } else {
+                self.status = .charging
+                self.headline = String(localized: "Charging · \(w)W charger", bundle: _coreLocalizedBundle) + cableLimitSuffix
+                self.subtitle = String(localized: "Power is flowing. No data connection.", bundle: _coreLocalizedBundle)
+            }
         } else if active.isEmpty && supported.contains("USB2"), batteryFullyCharged == true {
             self.status = .batteryFull
             self.headline = String(localized: "Plugged in · battery full", bundle: _coreLocalizedBundle)
